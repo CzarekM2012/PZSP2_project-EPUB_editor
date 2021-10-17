@@ -1,34 +1,41 @@
-from PySide6.QtWidgets import QApplication, QWidget
-from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtCore import QByteArray, QUrl
-from PySide6.QtWebEngineQuick import QtWebEngineQuick
+from PySide6.QtWidgets import QApplication, QWidget  # type:ignore
+from PySide6.QtWebEngineWidgets import QWebEngineView  # type:ignore
+from PySide6.QtCore import QByteArray, QUrl  # type:ignore
+from PySide6.QtWebEngineQuick import QtWebEngineQuick  # type:ignore
 
 # Only needed for access to command line arguments
 import sys
+import os
+import os.path as path
 
-def startApp(filePath, basePath):
-    # You need one (and only one) QApplication instance per application.
-    # Pass in sys.argv to allow command line arguments for your app.
-    # If you know you won't use command line arguments QApplication([]) works too.
+debug = False
+folder_name = path.split(path.dirname(__file__))[1]
+if(folder_name == "pzsp2"):
+    debug = True
+
+def start_app(file_path):
     app = QApplication(sys.argv)
-
-    # Create a Qt widget, which will be our window.
     window = QWebEngineView()
-    with open(filePath, encoding='utf-8') as file:
-        data = file.readlines()
-    data = ''.join(data)
-    data = QByteArray(data.encode())
-    window.setContent(data, mimeType="text/html;charset=UTF-8", baseUrl=QUrl.fromLocalFile(basePath))
-    window.show()  # IMPORTANT!!!!! Windows are hidden by default.
 
-    # Start the event loop.
+    # Using load() instead of setContent() fixes file not found problems somehow
+    window.load(QUrl.fromLocalFile(file_path))
+    window.show()
     app.exec()
 
 
-if __name__ == '__main__':
-    filePath1 = 'resources/html/common_tasks.xhtml'
-    basePath1 = 'D:/Code/Python/PZSP2/pysideTest/resources/html/'
-    fp2 = 'pantadeusz/nav.xhtml'
-    bp2 = 'D:/Code/Python/PZSP2/pysideTest/pantadeusz/'
+def main():
+    global debug
+    base_path = path.dirname(__file__)
 
-    startApp(fp2, bp2)
+    if not debug:
+        base_path = os.path.split(base_path)[0]
+    
+    # Just in case
+    os.chdir(base_path)
+
+    nav_path = path.join(base_path, 'books', 'pantadeusz', 'nav.xhtml')
+    start_app(nav_path)
+
+
+
+main()
