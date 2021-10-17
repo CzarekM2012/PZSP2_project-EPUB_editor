@@ -5,26 +5,37 @@ from PySide6.QtWebEngineQuick import QtWebEngineQuick  # type:ignore
 
 # Only needed for access to command line arguments
 import sys
+import os
 import os.path as path
 
+debug = False
+folder_name = path.split(path.dirname(__file__))[1]
+if(folder_name == "pzsp2"):
+    debug = True
 
-def start_app(file_path, base_path):
+def start_app(file_path):
     app = QApplication(sys.argv)
     window = QWebEngineView()
-    with open(file_path, encoding='utf-8') as file:
-        page_data = file.readlines()
-    page_data = ''.join(page_data)
-    page_data = QByteArray(page_data.encode())
-    window.setContent(page_data, mimeType="text/html;charset=UTF-8", baseUrl=QUrl.fromLocalFile(base_path))
-    window.show()
 
+    # Using load() instead of setContent() fixes file not found problems somehow
+    window.load(QUrl.fromLocalFile(file_path))
+    window.show()
     app.exec()
 
 
-if __name__ == '__main__':
-    filePath1 = 'resources/html/common_tasks.xhtml'
-    basePath1 = path.dirname(__file__) + '/'
-    fp2 = 'books/pantadeusz/nav.xhtml'
-    bp2 = basePath1 + 'books/pantadeusz/'
+def main():
+    global debug
+    base_path = path.dirname(__file__)
 
-    start_app(fp2, bp2)
+    if not debug:
+        base_path = os.path.split(base_path)[0]
+    
+    # Just in case
+    os.chdir(base_path)
+
+    nav_path = path.join(base_path, 'books', 'pantadeusz', 'nav.xhtml')
+    start_app(nav_path)
+
+
+
+main()
