@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='utf-8'?>
+<package unique-identifier="id" version="3.0" xmlns="http://www.idpf.org/2007/opf" prefix="rendition: http://www.idpf.org/vocab/rendition/#">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <meta property="dcterms:modified">2021-10-04T13:49:34Z</meta>
+    <meta content="Ebook-lib 0.17.1" name="generator"/>
+    <dc:identifier id="id">http://wolnelektury.pl/katalog/lektura/pan-tadeusz</dc:identifier>
+    <dc:language>pl</dc:language>
+    <dc:title>Pan Tadeusz, czyli ostatni zajazd na Litwie</dc:title>
+    <dc:creator id="creator0">Adam Mickiewicz</dc:creator>
+    <dc:publisher>Fundacja Nowoczesna Polska</dc:publisher>
+    <dc:date>2010-03-03</dc:date>
+    <meta property="file-as" refines="#creator0" scheme="marc:relators">Mickiewicz, Adam</meta>
+    <meta name="cover" content="cover-img"></meta>
+  </metadata>
+  <manifest>
+    <item href="cover.jpg" id="cover-img" media-type="image/jpeg" properties="cover-image"/>
+    <item href="cover.xhtml" id="cover" media-type="application/xhtml+xml"/>
+    <item href="title.xhtml" id="title" media-type="application/xhtml+xml"/>
+    <item href="logo_wolnelektury.png" id="logo_wolnelektury" media-type="image/png"/>
+    <item href="nav.xhtml" id="nav" media-type="application/xhtml+xml" properties="nav"/>
+    <item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>
+    <item href="part1.xhtml" id="part1" media-type="application/xhtml+xml"/>
+    <item href="part2.xhtml" id="part2" media-type="application/xhtml+xml"/>
+    <item href="part3.xhtml" id="part3" media-type="application/xhtml+xml"/>
+    <item href="part4.xhtml" id="part4" media-type="application/xhtml+xml"/>
+    <item href="part5.xhtml" id="part5" media-type="application/xhtml+xml"/>
+    <item href="part6.xhtml" id="part6" media-type="application/xhtml+xml"/>
+    <item href="part7.xhtml" id="part7" media-type="application/xhtml+xml"/>
+    <item href="part8.xhtml" id="part8" media-type="application/xhtml+xml"/>
+    <item href="part9.xhtml" id="part9" media-type="application/xhtml+xml"/>
+    <item href="part10.xhtml" id="part10" media-type="application/xhtml+xml"/>
+    <item href="part11.xhtml" id="part11" media-type="application/xhtml+xml"/>
+    <item href="part12.xhtml" id="part12" media-type="application/xhtml+xml"/>
+    <item href="part13.xhtml" id="part13" media-type="application/xhtml+xml"/>
+    <item href="part14.xhtml" id="part14" media-type="application/xhtml+xml"/>
+    <item href="part15.xhtml" id="part15" media-type="application/xhtml+xml"/>
+    <item href="part16.xhtml" id="part16" media-type="application/xhtml+xml"/>
+    <item href="part17.xhtml" id="part17" media-type="application/xhtml+xml"/>
+    <item href="part18.xhtml" id="part18" media-type="application/xhtml+xml"/>
+    <item href="part19.xhtml" id="part19" media-type="application/xhtml+xml"/>
+    <item href="part20.xhtml" id="part20" media-type="application/xhtml+xml"/>
+    <item href="part21.xhtml" id="part21" media-type="application/xhtml+xml"/>
+    <item href="part22.xhtml" id="part22" media-type="application/xhtml+xml"/>
+    <item href="part23.xhtml" id="part23" media-type="application/xhtml+xml"/>
+    <item href="part24.xhtml" id="part24" media-type="application/xhtml+xml"/>
+    <item href="part25.xhtml" id="part25" media-type="application/xhtml+xml"/>
+    <item href="part26.xhtml" id="part26" media-type="application/xhtml+xml"/>
+    <item href="annotations.xhtml" id="annotations" media-type="application/xhtml+xml"/>
+    <item href="support.xhtml" id="support" media-type="application/xhtml+xml"/>
+    <item href="jedenprocent.png" id="jedenprocent" media-type="image/png"/>
+    <item href="style.css" id="style" media-type="text/css"/>
+    <item href="last.xhtml" id="last" media-type="application/xhtml+xml"/>
+    <item href="fund0.xhtml" id="fund0" media-type="application/xhtml+xml"/>
+    <item href="fund1.xhtml" id="fund1" media-type="application/xhtml+xml"/>
+    <item href="fund2.xhtml" id="fund2" media-type="application/xhtml+xml"/>
+    <item href="fund3.xhtml" id="fund3" media-type="application/xhtml+xml"/>
+    <item href="fund4.xhtml" id="fund4" media-type="application/xhtml+xml"/>
+    <item href="fund5.xhtml" id="fund5" media-type="application/xhtml+xml"/>
+    <item href="fund6.xhtml" id="fund6" media-type="application/xhtml+xml"/>
+    <item href="fund7.xhtml" id="fund7" media-type="application/xhtml+xml"/>
+    <item href="DejaVuSerif.ttf" id="DejaVuSerif" media-type="font/ttf"/>
+    <item href="DejaVuSerif-Bold.ttf" id="DejaVuSerif-Bold" media-type="font/ttf"/>
+    <item href="DejaVuSerif-Italic.ttf" id="DejaVuSerif-Italic" media-type="font/ttf"/>
+    <item href="DejaVuSerif-BoldItalic.ttf" id="DejaVuSerif-BoldItalic" media-type="font/ttf"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="cover" linear="no"/>
+    <itemref idref="title"/>
+    <itemref idref="nav"/>
+    <itemref idref="part1"/>
+    <itemref idref="fund0"/>
+    <itemref idref="part2"/>
+    <itemref idref="part3"/>
+    <itemref idref="part4"/>
+    <itemref idref="fund1"/>
+    <itemref idref="part5"/>
+    <itemref idref="part6"/>
+    <itemref idref="part7"/>
+    <itemref idref="fund2"/>
+    <itemref idref="part8"/>
+    <itemref idref="part9"/>
+    <itemref idref="part10"/>
+    <itemref idref="fund3"/>
+    <itemref idref="part11"/>
+    <itemref idref="part12"/>
+    <itemref idref="part13"/>
+    <itemref idref="part14"/>
+    <itemref idref="fund4"/>
+    <itemref idref="part15"/>
+    <itemref idref="part16"/>
+    <itemref idref="part17"/>
+    <itemref idref="fund5"/>
+    <itemref idref="part18"/>
+    <itemref idref="part19"/>
+    <itemref idref="part20"/>
+    <itemref idref="fund6"/>
+    <itemref idref="part21"/>
+    <itemref idref="part22"/>
+    <itemref idref="part23"/>
+    <itemref idref="fund7"/>
+    <itemref idref="part24"/>
+    <itemref idref="part25"/>
+    <itemref idref="part26"/>
+    <itemref idref="annotations"/>
+    <itemref idref="support"/>
+    <itemref idref="last"/>
+  </spine>
+  <guide>
+    <reference href="cover.xhtml" title="Okładka" type="cover"/>
+    <reference href="part1.xhtml" title="Początek" type="text"/>
+  </guide>
+</package>

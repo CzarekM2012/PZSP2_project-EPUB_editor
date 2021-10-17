@@ -1,0 +1,399 @@
+@page {
+  margin: 5pt;
+}
+@font-face {
+    font-family: "DejaVu Serif";
+    font-weight: normal;
+    font-style: normal;
+    src: url(DejaVuSerif.ttf);
+}
+@font-face {
+    font-family: "DejaVu Serif";
+    font-weight: bold;
+    font-style: normal;
+    src: url(DejaVuSerif-Bold.ttf);
+}
+@font-face {
+    font-family: "DejaVu Serif";
+    font-weight: normal;
+    font-style: italic;
+    src: url(DejaVuSerif-Italic.ttf);
+}
+@font-face {
+    font-family: "DejaVu Serif";
+    font-weight: bold;
+    font-style: italic;
+    src: url(DejaVuSerif-BoldItalic.ttf);
+}
+
+body, p, h1, h2, h3, h4 {
+    font-family: "DejaVu Serif", serif;
+}
+
+
+body
+{
+    line-height: 1.5em;
+    margin: 0;
+}
+
+a
+{
+    text-decoration: none;
+    color: #00e;
+}
+
+a img {
+    border: 0;
+}
+
+#book-text {
+    margin: 0;
+}
+
+/* =================================================== */
+/* = Common elements: headings, paragraphs and lines = */
+/* =================================================== */
+
+
+.h2
+{
+    font-size: 2em;
+    margin: 0;
+    margin-top: 1.5em;
+    font-weight: bold;
+    line-height: 1.5em;
+}
+
+.h3
+{
+    text-align:left;
+    font-size: 1.5em;
+    margin-top: 1.5em;
+    font-weight: normal;
+    line-height: 1.5em;
+}
+
+.h4
+{
+    font-size: 1em;
+    margin: 0;
+    margin-top: 1.5em;
+    line-height: 1.5em;
+}
+
+p
+{
+    margin: 0;
+}
+
+/* ======================== */
+/* = Footnotes and themes = */
+/* ======================== */
+
+.theme-begin
+{
+    border-left: 0.1em solid #DDDDDD;
+    color: #777;
+    padding: 0 0.5em;
+    width: 7.5em;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 0.875em;
+    float: right;
+    margin-right: -9.5em;
+    clear: both;
+    left: 40em;
+    line-height: 1.5em;
+    text-align: left;
+}
+
+.annotation
+{
+    margin-bottom: 0.3em;
+    text-align: justify;
+}
+
+.block
+{
+    font-size: 0.875em;
+    padding: 1em;
+}
+
+
+/* ============= */
+/* = Numbering = */
+/* ============= */
+
+.anchor sup
+{
+    line-height: 0;
+    font-size: 0.7em;
+}
+
+/* =================== */
+/* = Custom elements = */
+/* =================== */
+
+.title-page
+{
+    margin-top: 1.5em;
+}
+
+.title
+{
+    font-size: 3em;
+    text-align: center;
+    line-height: 1.5em;
+    font-weight: bold;
+}
+
+.author
+{
+    margin: 0;
+    text-align: center;
+    font-weight: bold;
+
+    font-size: 1.5em;
+    line-height: 1.5em;
+    margin-bottom: 0.25em;
+}
+
+.intitle
+{
+    margin: 0;
+    text-align: center;
+    font-weight: bold;
+
+    font-size: 1.5em;
+    line-height: 1.5em;
+    margin-bottom: 0.25em;
+}
+
+.insubtitle
+{
+    margin: 0;
+    text-align: center;
+    font-weight: bold;
+
+    font-size: 1em;
+    line-height: 1.5em;
+    margin-bottom: 0.25em;
+}
+
+.collection
+{
+    margin: 0;
+    text-align: center;
+    font-weight: bold;
+
+    font-size: 1.125em;
+    line-height: 1.5em;
+    margin-bottom: -0.25em;
+}
+
+.subtitle
+{
+    margin: 0;
+    text-align: center;
+    font-weight: bold;
+
+    font-size: 1.5em;
+    line-height: 1.5em;
+    margin-top: -0.25em;
+}
+
+div.didaskalia
+{
+    font-style: italic;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    margin-left: 1.5em;
+}
+
+.kwestia
+{
+    margin-top: 0.5em;
+}
+
+.paragraph
+{
+    text-align: justify;
+    margin: 0;
+    text-indent: 1.2em;
+}
+
+h1 + .paragraph, h2 + .paragraph
+{
+    text-indent: 0;
+}
+
+h2 + .paragraph:first-letter
+{
+    font-size: 1.6em;
+}
+
+.motto
+{
+    text-align: justify;
+    font-style: italic;
+    margin-top: 1.5em;
+}
+
+.motto_podpis, .motto_podpis .paragraph
+{
+    font-size: 0.875em;
+    text-align: right;
+    font-style: italic;
+}
+
+.fragment
+{
+    border-bottom: 0.1em solid #999;
+    padding-bottom: 1.5em;
+}
+
+.dedication, .dedication .paragraph
+{
+    text-align: right;
+    font-style: italic;
+}
+
+.note
+{
+    text-align: right;
+    font-style: italic;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.note .paragraph
+{
+    text-align: justify;
+}
+
+.frame
+{
+    border: 1px darkgray solid;
+    padding: 1em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+hr.spacer
+{
+    height: 3em;
+    visibility: hidden;
+}
+
+hr.spacer-line
+{
+    margin: 0;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    border: none;
+    border-bottom: 0.1em solid #000;
+}
+
+.spacer-asterisk
+{
+    padding: 0;
+    margin: 0;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    text-align: center;
+}
+
+div.person-list ol
+{
+    list-style: none;
+    padding: 0;
+    padding-left: 1.5em;
+}
+
+.place-and-time
+{
+    font-style: italic;
+}
+
+em.math
+{
+    font-style: italic;
+}
+em.foreign-word
+{
+    font-style: italic;
+}
+em.book-title
+{
+    font-style: italic;
+}
+em.didaskalia
+{
+    font-style: italic;
+}
+
+em.author-emphasis
+{
+    letter-spacing: 0.1em;
+}
+
+em.wieksze-odstepy
+{
+    font-style: normal;
+    word-spacing: 1em;
+}
+
+.person-list em.person
+{
+    font-style: normal;
+    /*font-variant: small-caps;*/
+    text-transform: uppercase;
+}
+
+.info
+{
+    text-align: center;
+    margin-bottom: 1em;
+}
+.info div
+{
+    text-align: center;
+}
+
+.info img
+{
+    margin: 0;
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+p.minor-info {
+    text-align: center;
+    margin-bottom: 1em;
+    font-size: 0.75em;
+}
+p.footer {
+    margin-top: 2em;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+table.border th, table.border td {
+    border: 1px solid black;
+}
+
+th, td {
+    vertical-align: top;
+}
+
+.fundraising {
+	margin: 2em 1em 0;
+	border: 2px solid black;
+	padding: 2em 2em;
+	text-align: center;
+	font-size: 1.3em;
+	line-height: 1.4em;
+}
