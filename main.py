@@ -6,29 +6,24 @@ from PySide6.QtWebEngineQuick import QtWebEngineQuick
 # Only needed for access to command line arguments
 import sys
 
-def startApp(filePath, basePath):
-    # You need one (and only one) QApplication instance per application.
-    # Pass in sys.argv to allow command line arguments for your app.
-    # If you know you won't use command line arguments QApplication([]) works too.
+
+def start_app(file_path, base_path):
     app = QApplication(sys.argv)
-
-    # Create a Qt widget, which will be our window.
     window = QWebEngineView()
-    with open(filePath, encoding='utf-8') as file:
-        data = file.readlines()
-    data = ''.join(data)
-    data = QByteArray(data.encode())
-    window.setContent(data, mimeType="text/html;charset=UTF-8", baseUrl=QUrl.fromLocalFile(basePath))
-    window.show()  # IMPORTANT!!!!! Windows are hidden by default.
+    with open(file_path, encoding='utf-8') as file:
+        page_data = file.readlines()
+    page_data = ''.join(page_data)
+    page_data = QByteArray(page_data.encode())
+    window.setContent(page_data, mimeType="text/html;charset=UTF-8", baseUrl=QUrl.fromLocalFile(base_path))
+    window.show()
 
-    # Start the event loop.
     app.exec()
 
 
 if __name__ == '__main__':
-    filePath1 = 'resources/html/common_tasks.xhtml'
-    basePath1 = 'D:/Code/Python/PZSP2/pysideTest/resources/html/'
+    file_path1 = 'resources/html/common_tasks.xhtml'
+    base_path1 = 'D:/Code/Python/PZSP2/pysideTest/resources/html/'
     fp2 = 'pantadeusz/nav.xhtml'
     bp2 = 'D:/Code/Python/PZSP2/pysideTest/pantadeusz/'
 
-    startApp(fp2, bp2)
+    start_app(fp2, bp2)
