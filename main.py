@@ -1,10 +1,11 @@
-from PySide6.QtWidgets import QApplication, QWidget
-from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtCore import QByteArray, QUrl
-from PySide6.QtWebEngineQuick import QtWebEngineQuick
+from PySide6.QtWidgets import QApplication, QWidget  # type:ignore
+from PySide6.QtWebEngineWidgets import QWebEngineView  # type:ignore
+from PySide6.QtCore import QByteArray, QUrl  # type:ignore
+from PySide6.QtWebEngineQuick import QtWebEngineQuick  # type:ignore
 
 # Only needed for access to command line arguments
 import sys
+import os.path as path
 
 
 def start_app(file_path, base_path):
@@ -21,9 +22,9 @@ def start_app(file_path, base_path):
 
 
 if __name__ == '__main__':
-    file_path1 = 'resources/html/common_tasks.xhtml'
-    base_path1 = 'D:/Code/Python/PZSP2/pysideTest/resources/html/'
-    fp2 = 'pantadeusz/nav.xhtml'
-    bp2 = 'D:/Code/Python/PZSP2/pysideTest/pantadeusz/'
+    filePath1 = 'resources/html/common_tasks.xhtml'
+    basePath1 = path.dirname(__file__) + '/'
+    fp2 = 'books/pantadeusz/nav.xhtml'
+    bp2 = basePath1 + 'books/pantadeusz/'
 
     start_app(fp2, bp2)
