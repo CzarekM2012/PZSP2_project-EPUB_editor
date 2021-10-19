@@ -7,6 +7,7 @@ from PySide6.QtWebEngineQuick import QtWebEngineQuick  # type:ignore
 import sys
 import os
 import os.path as path
+from main_window import MainWindow
 
 debug = False
 folder_name = path.split(path.dirname(__file__))[1]
@@ -15,10 +16,12 @@ if(folder_name == "pzsp2"):
 
 def start_app(file_path):
     app = QApplication(sys.argv)
-    window = QWebEngineView()
+    #window = QWebEngineView()
 
     # Using load() instead of setContent() fixes file not found problems somehow
-    window.load(QUrl.fromLocalFile(file_path))
+    #window.load(QUrl.fromLocalFile(file_path))
+
+    window = MainWindow(file_path)
     window.show()
     app.exec()
 
