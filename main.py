@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QApplication, QWidget  # type:ignore
+from PySide6.QtGui import QPalette
+from PySide6.QtWidgets import QApplication, QStyleFactory, QWidget  # type:ignore
 from PySide6.QtWebEngineWidgets import QWebEngineView  # type:ignore
 from PySide6.QtCore import QByteArray, QUrl  # type:ignore
 from PySide6.QtWebEngineQuick import QtWebEngineQuick  # type:ignore
@@ -40,5 +41,6 @@ def main():
     start_app(nav_path)
 
 
-
-main()
+if __name__ == '__main__':
+    print(QStyleFactory.keys())
+    main()
