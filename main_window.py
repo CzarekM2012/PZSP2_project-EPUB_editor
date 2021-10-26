@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMainWindow, QSlider, QStyleFactory, QToolBar, QVBoxLayout, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
-from ebooklib import epub
-import ebooklib
+from reader import Reader
+
 
 class MainWindow(QMainWindow):
 
@@ -16,28 +16,23 @@ class MainWindow(QMainWindow):
         self.setup_menubar()
         self.setup_control_panel()
         self.setup_webview()
-        
-        self.load_file(file_path)
-        
-        self.show_page(4)
-       
+
+        self.reader = Reader(file_path)
+        self.page_nr_current = 4
+
+        self.show_page(page_nr=self.page_nr_current)
+
         main_layout = QHBoxLayout()
         main_layout.addWidget(self.control_panel)
         main_layout.addWidget(self.webview)
-        
+
         self.central_widget = QWidget()
         self.central_widget.setLayout(main_layout)
         self.setCentralWidget(self.central_widget)
 
-
-    def load_file(self, file_path):
-        self.book = epub.read_epub(file_path)
-        self.prepare_css()
-
-
     def next_page(self):
         self.show_page(self.page_nr_current+1)
-    
+
     def prev_page(self):
         self.show(self.page_nr_current-1)
 
@@ -45,43 +40,33 @@ class MainWindow(QMainWindow):
 
         # Determine correct page number
         if page_nr < 0:
-            self.page_nr_current = self.get_page_count()
-        
-        elif page_nr > self.get_page_count():
+            self.page_nr_current = self.reader.get_page_count()
+
+        elif page_nr > self.reader.get_page_count():
             self.page_nr_current = 0
-        
+
         else:
             self.page_nr_current = page_nr
 
         # Getting actual content without unpacking the file
-        self.shown_document = self.book.get_item_with_id(self.book.spine[self.page_nr_current][0])
-        
+        # self.shown_document = self.book.get_item_with_id(self.book.spine[self.page_nr_current][0])
+
         # Stylesheet needs to be manually added the HTML document, because it's not a file that a browser can find
-        content = self.shown_document.content
-        content += self.stylesheet
-        #pos = content.find(b'<link href="../Styles/stylesheet.css" rel="stylesheet" type="text/css" />  <link href="../Styles/page_styles.css" rel="stylesheet" type="text/css" />')
-        #l = len(b'<link href="../Styles/stylesheet.css" rel="stylesheet" type="text/css" />  <link href="../Styles/page_styles.css" rel="stylesheet" type="text/css" />')
-        #content = content[:pos] + content[pos+l:]
-        
-        print(content.decode("utf-8"))
+        # content = self.shown_document.content
+        # content += self.stylesheet
+        # pos = content.find(b'<link href="../Styles/stylesheet.css" rel="stylesheet" type="text/css" />  <link href="../Styles/page_styles.css" rel="stylesheet" type="text/css" />')
+        # l = len(b'<link href="../Styles/stylesheet.css" rel="stylesheet" type="text/css" />  <link href="../Styles/page_styles.css" rel="stylesheet" type="text/css" />')
+        # content = content[:pos] + content[pos+l:]
+
+        # print(content.decode("utf-8"))
+        page = self.reader.get_page_content(page_nr)
+        stylesheet = self.reader.get_stylesheet()
+        content = page + b'<style>\n' + stylesheet + b'\n</style>'
+
         self.webview.setContent(content, 'text/html;charset=UTF-8')
 
     def get_page_count(self):
         return len(self.book.spine)
-
-
-    # Compiles a big stylesheet containing all CSS files
-    # has to be called on document load/change
-    def prepare_css(self):
-        items = self.book.get_items_of_type(ebooklib.ITEM_STYLE)
-        
-        stylesheet = b'<style>\n'
-        for item in items:
-            stylesheet += item.content
-        stylesheet += b'\n</style>'
-
-        self.stylesheet = stylesheet
-
 
     def setup_menubar(self):
         menu = self.menuBar()
@@ -105,5 +90,3 @@ class MainWindow(QMainWindow):
         control_panel_layout.addWidget(QComboBox())
 
         self.control_panel.setLayout(control_panel_layout)
-
-
