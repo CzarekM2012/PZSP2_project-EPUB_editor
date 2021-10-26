@@ -37,8 +37,10 @@ def main():
     # Just in case
     os.chdir(base_path)
 
-    nav_path = path.join(base_path, 'books', 'pantadeusz', 'nav.xhtml')
-    start_app(nav_path)
+    file_path = path.join(base_path, 'books', 'niezwyciezony.epub')
+
+    #nav_path = path.join(base_path, 'books', 'pantadeusz', 'nav.xhtml')
+    start_app(file_path)
 
 
 if __name__ == '__main__':
