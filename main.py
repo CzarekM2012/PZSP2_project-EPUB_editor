@@ -17,11 +17,6 @@ if(folder_name == "pzsp2"):
 
 def start_app(file_path):
     app = QApplication(sys.argv)
-    #window = QWebEngineView()
-
-    # Using load() instead of setContent() fixes file not found problems somehow
-    #window.load(QUrl.fromLocalFile(file_path))
-
     window = MainWindow(file_path)
     window.show()
     app.exec()
