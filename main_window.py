@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMainWindow, QSlider, QStyleFactory, QToolBar, QVBoxLayout, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
-
+from gui_elements import *
 class MainWindow(QMainWindow):
     def __init__(self, file_path):
         super(MainWindow, self).__init__()
@@ -23,12 +23,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def setup_menubar(self):
-        menu = self.menuBar()
-        file_menu = menu.addAction('&File')
-        edit_menu = menu.addAction('&Edit')
-        selection_menu = menu.addAction('&Selection')
-        view_menu = menu.addAction('&View')
-        menu.setStyleSheet('QMenuBar {background-color:#515151; color: #f0f0f0;}')
+        self.setMenuBar(MyMenuBar())
 
     def setup_webview(self, file_path):
         self.webview = QWebEngineView()
