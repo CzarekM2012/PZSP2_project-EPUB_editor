@@ -349,8 +349,3 @@ class Pathfinder:
         if guide is not None:
             self._guide = [{'href': t.get('href'), 'title': t.get('title'),
                             'type': t.get('type')} for t in guide]'''
-
-
-test = Pathfinder(path.join(path.dirname(__file__), 'books', 'niezwyciezony'))
-test.search()
-print('')
