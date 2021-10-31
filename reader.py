@@ -25,3 +25,8 @@ class Reader:
         for stylesheet in stylesheets:
             complete_stylesheet += stylesheet.content
         return complete_stylesheet
+
+    def get_fonts(self):
+        fonts = self.book.get_items_of_type(ebooklib.ITEM_FONT)
+        for font in fonts:
+            content = font.content

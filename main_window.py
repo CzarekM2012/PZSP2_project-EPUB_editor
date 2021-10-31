@@ -17,10 +17,12 @@ class MainWindow(QMainWindow):
         self.setup_control_panel()
         self.setup_webview()
 
-        self.reader = Reader(file_path)
+        #self.reader = Reader(file_path)
         self.page_nr_current = 4
 
-        self.show_page(page_nr=self.page_nr_current)
+        self.webview.load(QUrl.fromLocalFile(file_path))
+
+        #self.show_page(page_nr=self.page_nr_current)
 
         main_layout = QHBoxLayout()
         main_layout.addWidget(self.control_panel)
@@ -62,6 +64,7 @@ class MainWindow(QMainWindow):
         page = self.reader.get_page_content(page_nr)
         stylesheet = self.reader.get_stylesheet()
         content = page + b'<style>\n' + stylesheet + b'\n</style>'
+        self.reader.get_fonts()
 
         self.webview.setContent(content, 'text/html;charset=UTF-8')
 
