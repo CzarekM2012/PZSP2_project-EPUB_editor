@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         self.edition_dir = path.join(path.dirname(__file__), 'edit')
         self.pathfinder = Pathfinder(self.edition_dir)
 
-        self.webview.load(QUrl.fromLocalFile(file_path))
+        #self.webview.load(QUrl.fromLocalFile(file_path))
 
         #self.show_page(page_nr=self.page_nr_current)
 
@@ -76,6 +76,11 @@ class MainWindow(QMainWindow):
         else:
             self.page_nr_current = page_nr
 
+        page_file_path = path.join(self.edition_dir,
+                                   self.pathfinder.spine[self.page_nr_current])
+        url = QUrl.fromLocalFile(page_file_path)
+        self.webview.load(url)
+
         # Getting actual content without unpacking the file
         # self.shown_document = self.book.get_item_with_id(self.book.spine[self.page_nr_current][0])
 
@@ -87,12 +92,12 @@ class MainWindow(QMainWindow):
         # content = content[:pos] + content[pos+l:]
 
         # print(content.decode("utf-8"))
-        page = self.reader.get_page_content(page_nr)
-        stylesheet = self.reader.get_stylesheet()
-        content = page + b'<style>\n' + stylesheet + b'\n</style>'
-        self.reader.get_fonts()
+        #page = self.reader.get_page_content(page_nr)
+        #stylesheet = self.reader.get_stylesheet()
+        #content = page + b'<style>\n' + stylesheet + b'\n</style>'
+        #self.reader.get_fonts()
 
-        self.webview.setContent(content, 'text/html;charset=UTF-8')
+        #self.webview.setContent(content, 'text/html;charset=UTF-8')
 
     def get_page_count(self):
         return len(self.book.spine)
