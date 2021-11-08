@@ -46,7 +46,12 @@ class Pathfinder:
         return tree
 
     def _load_container(self) -> None:
-        meta_inf = self._read('META-INF/container.xml')
+        try:
+            meta_inf = self._read('META-INF/container.xml')
+        except FileNotFoundError as e:
+            # TODO: display communicat that file cannot be edited,
+            # because it does not conform to EPUB standard
+            pass
         tree = self._parse_string(meta_inf)
 
         for root_file in \

@@ -1,10 +1,11 @@
+import zipfile
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMainWindow, QSlider, QStyleFactory, QToolBar, QVBoxLayout, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 from reader import Reader
 from pathfinder import Pathfinder
-from os import path, listdir, remove, mkdir, unlink
-from zipfile import ZipFile
+from os import path, listdir, mkdir, unlink, walk
+from zipfile import ZIP_DEFLATED, ZipFile
 from shutil import rmtree
 
 
@@ -52,13 +53,27 @@ class MainWindow(QMainWindow):
         else:
             mkdir(self.edition_dir)
 
-    def load_book(self, file_dir) -> None:
+    def load_book(self, file_path) -> None:
         self.prepare_edition_dir()
-        book = ZipFile(file_dir)
+        book = ZipFile(file_path)
         book.extractall(self.edition_dir)
+        book.close()
         self.pathfinder.search()
         self.page_nr_current = 0
         self.page_count = len(self.pathfinder.spine)
+
+    def save_book(self, save_path) -> None:
+        folder_name = path.splitext(path.basename(save_path))[0]
+        # will get permission error if there is a folder with name "folder_name"
+        # in save_dir
+        book = ZipFile(save_path, 'w', ZIP_DEFLATED)
+        for root, dirs, files in walk(self.edition_dir):
+            for file in files:
+                book.write(path.join(root, file),
+                           path.join(folder_name,
+                                     path.relpath(path.join(root, file),
+                                                  self.edition_dir)))
+        book.close()
 
     def next_page(self):
         self.show_page(self.page_nr_current+1)
