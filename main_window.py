@@ -2,6 +2,10 @@ from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMainWindow, QSlid
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 from reader import Reader
+from pathfinder import Pathfinder
+from os import path, listdir, remove, mkdir, unlink
+from zipfile import ZipFile
+from shutil import rmtree
 
 
 class MainWindow(QMainWindow):
@@ -18,7 +22,8 @@ class MainWindow(QMainWindow):
         self.setup_webview()
 
         #self.reader = Reader(file_path)
-        self.page_nr_current = 4
+        self.edition_dir = path.join(path.dirname(__file__), 'edit')
+        self.pathfinder = Pathfinder(self.edition_dir)
 
         self.webview.load(QUrl.fromLocalFile(file_path))
 
@@ -32,6 +37,29 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(main_layout)
         self.setCentralWidget(self.central_widget)
 
+    def prepare_edition_dir(self) -> None:
+        if path.isdir(self.edition_dir):
+            for filename in listdir(self.edition_dir):
+                file_path = path.join(self.edition_dir, filename)
+                try:
+                    if path.isfile(file_path) or path.islink(file_path):
+                        unlink(file_path)
+                    elif path.isdir(file_path):
+                        rmtree(file_path)
+                except OSError as e:
+                    # Probably only open file or lack of permissions
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+        else:
+            mkdir(self.edition_dir)
+
+    def load_book(self, file_dir) -> None:
+        self.prepare_edition_dir()
+        book = ZipFile(file_dir)
+        book.extractall(self.edition_dir)
+        self.pathfinder.search()
+        self.page_nr_current = 0
+        self.page_count = len(self.pathfinder.spine)
+
     def next_page(self):
         self.show_page(self.page_nr_current+1)
 
@@ -42,11 +70,9 @@ class MainWindow(QMainWindow):
 
         # Determine correct page number
         if page_nr < 0:
-            self.page_nr_current = self.reader.get_page_count()
-
-        elif page_nr > self.reader.get_page_count():
+            self.page_nr_current = self.page_count-1
+        elif page_nr >= self.page_count:
             self.page_nr_current = 0
-
         else:
             self.page_nr_current = page_nr
 

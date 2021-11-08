@@ -20,6 +20,9 @@ def start_app(file_path):
     #window.load(QUrl.fromLocalFile(file_path))
 
     window = MainWindow(file_path)
+
+    window.load_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony.epub'))
+
     window.show()
     app.exec()
 
