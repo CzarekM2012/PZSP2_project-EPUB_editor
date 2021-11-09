@@ -16,7 +16,6 @@ class MainWindow(QMainWindow):
 
     def set_defaults(self):
         self.setWindowTitle("PZSP2")
-        self.setStyleSheet('MainWindow {background-color:#7d7d7d}')
         self.setFixedHeight(720)
         self.setFixedWidth(1280)
 

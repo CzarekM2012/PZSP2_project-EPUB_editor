@@ -10,7 +10,6 @@ class MyMenuBar(QMenuBar):
         self.edit_menu = self.addMenu('&Edit')
         self.selection_menu = self.addMenu('&Selection')
         self.view_menu = self.addMenu('&View')
-        self.setStyleSheet('QMenuBar {background-color:#515151; color: #f0f0f0;}')
 
 
 class MyWebView(QWebEngineView):
