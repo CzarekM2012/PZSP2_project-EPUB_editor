@@ -30,3 +30,8 @@ class ControlPanel(QWidget):
         layout.addWidget(QComboBox())
 
         self.setLayout(layout)
+
+
+class CSSEditor(QTextEdit):
+    def __init__(self):
+        super().__init__()
