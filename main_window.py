@@ -1,5 +1,5 @@
 
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
@@ -40,15 +40,28 @@ class MainWindow(QMainWindow):
     def setup_menubar_actions(self):
         file_open_action = QAction(text='Open', parent=self)
         file_open_action.triggered.connect(self.file_open)
+        file_open_action.setShortcut(QKeySequence('Ctrl+o'))
         self.menu.file_menu.addAction(file_open_action)
 
         file_save_action = QAction(text='Save', parent=self)
+        file_save_action.setShortcut(QKeySequence('Ctrl+s'))
         file_save_action.triggered.connect(self.file_save)
         self.menu.file_menu.addAction(file_save_action)
 
         self.view_change_action = QAction(text='Change view to text editor', parent=self)
+        self.view_change_action.setShortcut(QKeySequence('Ctrl+Alt+v'))
         self.view_change_action.triggered.connect(self.change_view)
         self.menu.view_menu.addAction(self.view_change_action)
+
+        next_page_action = QAction(text='Next page', parent=self)
+        next_page_action.setShortcut(QKeySequence('Ctrl+.'))
+        next_page_action.triggered.connect(self.next_page)
+        self.menu.view_menu.addAction(next_page_action)
+
+        prev_page_action = QAction(text='Previous page', parent=self)
+        prev_page_action.setShortcut(QKeySequence('Ctrl+,'))
+        prev_page_action.triggered.connect(self.prev_page)
+        self.menu.view_menu.addAction(prev_page_action)
 
     def setup_webview(self):
         self.webview = QWebEngineView()
@@ -130,9 +143,11 @@ class MainWindow(QMainWindow):
 
     def next_page(self):
         self.show_page(self.page_nr_current+1)
+        print(f'Page {self.page_nr_current}')
 
     def prev_page(self):
-        self.show(self.page_nr_current-1)
+        self.show_page(self.page_nr_current-1)
+        print(f'Page {self.page_nr_current}')
 
     def show_page(self, page_nr):
 
