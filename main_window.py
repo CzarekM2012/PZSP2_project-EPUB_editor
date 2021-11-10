@@ -20,8 +20,9 @@ class MainWindow(QMainWindow):
         self.set_defaults()
 
         self.setup_menubar()
-        self.setup_control_panel()
         self.setup_webview()
+        self.setup_left_panel()
+        self.setup_layout()
 
         #self.reader = Reader(file_path)
         self.edition_dir = path.join(path.dirname(__file__), 'edit')
@@ -31,10 +32,57 @@ class MainWindow(QMainWindow):
 
         #self.show_page(page_nr=self.page_nr_current)
 
-        main_layout = QHBoxLayout()
-        main_layout.addWidget(self.control_panel)
-        main_layout.addWidget(self.webview)
+    def setup_menubar(self):
+        self.menu = MyMenuBar()
+        self.setup_menubar_actions()
+        self.setMenuBar(self.menu)
 
+    def setup_menubar_actions(self):
+        file_open_action = QAction(text='Open', parent=self)
+        file_open_action.triggered.connect(self.file_open)
+        self.menu.file_menu.addAction(file_open_action)
+
+        file_save_action = QAction(text='Save', parent=self)
+        file_save_action.triggered.connect(self.file_save)
+        self.menu.file_menu.addAction(file_save_action)
+
+        self.view_change_action = QAction(text='Change view to text editor', parent=self)
+        self.view_change_action.triggered.connect(self.change_view)
+        self.menu.view_menu.addAction(self.view_change_action)
+
+    def setup_webview(self):
+        self.webview = QWebEngineView()
+        self.webview.setFixedWidth(600)
+
+    def setup_left_panel(self):
+        self.setup_control_panel()
+        self.setup_css_editor()
+        self.left_panel = QWidget()
+        left_panel_layout = QStackedLayout()
+        left_panel_layout.addWidget(self.control_panel)
+        left_panel_layout.addWidget(self.css_editor)
+
+        self.left_panel.setLayout(left_panel_layout)
+
+    def setup_control_panel(self):
+        self.control_panel = QWidget()
+        control_panel_layout = QVBoxLayout()
+        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
+        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
+        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
+        control_panel_layout.addWidget(QComboBox())
+        control_panel_layout.addWidget(QComboBox())
+
+        self.control_panel.setLayout(control_panel_layout)
+
+    def setup_css_editor(self):
+        self.css_editor = CSSEditor()
+
+    def setup_layout(self):
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.left_panel)
+        main_layout.addWidget(self.webview)
+        
         self.central_widget = QWidget()
         self.central_widget.setLayout(main_layout)
         self.setCentralWidget(self.central_widget)
@@ -122,61 +170,7 @@ class MainWindow(QMainWindow):
     def get_page_count(self):
         return len(self.book.spine)
 
-    def setup_menubar(self):
-        self.menu = MyMenuBar()
-        self.setup_menubar_actions()
-        self.setMenuBar(self.menu)
-
-    def setup_menubar_actions(self):
-        file_open_action = QAction(text='Open', parent=self)
-        file_open_action.triggered.connect(self.file_open)
-        self.menu.file_menu.addAction(file_open_action)
-
-        file_save_action = QAction(text='Save', parent=self)
-        file_save_action.triggered.connect(self.file_save)
-        self.menu.file_menu.addAction(file_save_action)
-
-        self.view_change_action = QAction(text='Change view to text editor', parent=self)
-        self.view_change_action.triggered.connect(self.change_view)
-        self.menu.view_menu.addAction(self.view_change_action)
-
-    def setup_webview(self):
-        self.webview = QWebEngineView()
-        self.webview.setFixedWidth(600)
-
-    def setup_left_panel(self):
-        self.setup_control_panel()
-        self.setup_css_editor()
-        self.left_panel = QWidget()
-        left_panel_layout = QStackedLayout()
-        left_panel_layout.addWidget(self.control_panel)
-        left_panel_layout.addWidget(self.css_editor)
-
-        self.left_panel.setLayout(left_panel_layout)
-
-    def setup_control_panel(self):
-        self.control_panel = QWidget()
-        control_panel_layout = QVBoxLayout()
-        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        control_panel_layout.addWidget(QComboBox())
-        control_panel_layout.addWidget(QComboBox())
-
-        self.control_panel.setLayout(control_panel_layout)
-
-    def setup_css_editor(self):
-        self.css_editor = CSSEditor()
-
-
-    def setup_layout(self):
-        main_layout = QHBoxLayout()
-        main_layout.addWidget(self.left_panel)
-        main_layout.addWidget(self.webview)
-        
-        self.central_widget = QWidget()
-        self.central_widget.setLayout(main_layout)
-        self.setCentralWidget(self.central_widget)
+    
 
     def file_open(self):
         self.load_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony.epub'))
