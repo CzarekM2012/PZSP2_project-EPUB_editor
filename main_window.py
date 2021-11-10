@@ -1,4 +1,4 @@
-<<<<<<< main_window.py
+
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
