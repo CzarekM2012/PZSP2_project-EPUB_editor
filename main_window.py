@@ -69,16 +69,15 @@ class MainWindow(QMainWindow):
         self.page_count = len(self.pathfinder.spine)
 
     def save_book(self, save_path) -> None:
-        folder_name = path.splitext(path.basename(save_path))[0]
+        # folder_name = path.splitext(path.basename(save_path))[0]
         # will get permission error if there is a folder with name "folder_name"
         # in save_dir
         book = ZipFile(save_path, 'w', ZIP_DEFLATED)
         for root, dirs, files in walk(self.edition_dir):
             for file in files:
                 book.write(path.join(root, file),
-                           path.join(folder_name,
-                                     path.relpath(path.join(root, file),
-                                                  self.edition_dir)))
+                           path.relpath(path.join(root, file),
+                                        self.edition_dir))
         book.close()
 
     def next_page(self):
