@@ -1,6 +1,6 @@
 
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 
@@ -170,15 +170,18 @@ class MainWindow(QMainWindow):
     def get_page_count(self):
         return len(self.book.spine)
 
-    
-
+    # Funkcje wykorzystywane prze QAction
     def file_open(self):
-        self.load_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony.epub'))
+        file_path = QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]
+        self.original_file_path = path.abspath(file_path)
+        self.load_book(self.original_file_path)
         self.show_page(4)
         print('File opened')
 
     def file_save(self):
-        self.save_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony-edit.epub'))
+        new_file_path = self.original_file_path[:-5] + '-edited' + self.original_file_path[-5:]
+        file_path = QFileDialog.getSaveFileName(self, 'Save Epub', new_file_path, 'Epub Files (*.epub)')[0]
+        self.save_book(path.abspath(file_path))
         print('File saved')
 
     def change_view(self):
