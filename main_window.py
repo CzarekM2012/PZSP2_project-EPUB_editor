@@ -132,6 +132,10 @@ class MainWindow(QMainWindow):
         file_open_action.triggered.connect(self.file_open)
         self.menu.file_menu.addAction(file_open_action)
 
+        file_save_action = QAction(text='Save', parent=self)
+        file_save_action.triggered.connect(self.file_save)
+        self.menu.file_menu.addAction(file_save_action)
+
         self.view_change_action = QAction(text='Change view to text editor', parent=self)
         self.view_change_action.triggered.connect(self.change_view)
         self.menu.view_menu.addAction(self.view_change_action)
@@ -175,7 +179,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def file_open(self):
+        self.load_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony.epub'))
+        self.show_page(4)
         print('File opened')
+
+    def file_save(self):
+        self.save_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony-edit.epub'))
+        print('File saved')
 
     def change_view(self):
         if self.left_panel.layout().currentIndex() == 0:

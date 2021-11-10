@@ -17,12 +17,8 @@ def start_app(file_path):
     app = QApplication(sys.argv)
     apply_stylesheet(app, theme='dark_blue.xml')
     window = MainWindow(file_path)
-
-    window.load_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony.epub'))
-    window.show_page(window.page_nr_current)
-    window.save_book(path.join(path.dirname(__file__), 'books', 'niezwyciezony-edit.epub'))
-
     window.show()
+    
     app.exec()
 
 
