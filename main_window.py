@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         self.menu.view_menu.addAction(prev_page_action)
 
     def setup_webview(self):
-        self.webview = QWebEngineView()
+        self.webview = MyWebView()
         self.webview.setFixedWidth(600)
 
     def setup_left_panel(self):
@@ -143,11 +143,9 @@ class MainWindow(QMainWindow):
 
     def next_page(self):
         self.show_page(self.page_nr_current+1)
-        print(f'Page {self.page_nr_current}')
 
     def prev_page(self):
         self.show_page(self.page_nr_current-1)
-        print(f'Page {self.page_nr_current}')
 
     def show_page(self, page_nr):
 
