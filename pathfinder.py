@@ -80,6 +80,27 @@ class Pathfinder:
         self._load_spine()
         #self._load_guide()
 
+    def get_absolute_paths(self, relative_path_list):
+        absolute_path_list = []
+        for relative_path in relative_path_list:
+            absolute_path_list.append(path.join(self.book_dir, path.normpath(relative_path)))
+        return absolute_path_list
+
+    def get_css_path_list(self):
+        return self.get_absolute_paths(self.stylesheets)
+
+    def get_html_path_list(self):
+        return self.get_absolute_paths(self.spine)
+
+    #def get_font_path_list(self):
+    #    return self.get_absolute_paths(self.fonts)
+
+    def get_css_path(self, index):
+        return self.get_absolute_paths([self.stylesheets[index]])[0]
+
+    def get_html_doc_count(self):
+        return len(self.spine)
+
     '''def _load_metadata(self):
         container_root = self.container.getroot()
 
