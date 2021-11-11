@@ -47,6 +47,25 @@ class FileManager:
         print('File loaded')
 
 
+    # Saves changes by overwriting edited css files
+    def update_css(self):
+        for i in range(self.get_css_file_count()):
+            print(self.get_stylesheet_text(i))
+            css_file = open(self.css_file_paths[i], "wb")
+            css_file.write(self.css_files[i].cssText)
+            css_file.close()
+
+
+
+
+    def get_css_param(self, style_name, param_name):
+        return self.get_css_style_by_name(style_name).getProperty(param_name)
+
+
+    def set_css_param(self, style_name, param_name, value):
+        self.get_css_style_by_name(style_name).setProperty(param_name, value)
+
+
     def get_css_style_names(self):
         name_list = []
         for file in self.css_files:
@@ -54,12 +73,25 @@ class FileManager:
                 name_list.append(item.selectorText)
         return name_list
 
+
     def get_css_style_by_name(self, name):
         for file in self.css_files:
             for item in file.cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
                 if name == item.selectorText:
                     return item.style 
         return None
+
+    
+    # Returns a list of string tuples: (name, value), one for each parameter
+    def get_css_params_by_style_name(self, name):
+        param_list = []
+        style = self.get_css_style_by_name(name)
+        if style == None:
+            return param_list
+        
+        for property in style.getProperties():
+            param_list.append((property.name, property.value))
+        return param_list
 
 
     def get_stylesheet_file(self, file_index):
@@ -75,13 +107,7 @@ class FileManager:
     def save_book(self, file_path):
 
         self.save_path = path.abspath(file_path)
-
-        # Save modified CSS to files
-        for i in range(self.get_css_file_count()):
-            print(self.get_stylesheet_text(i))
-            css_file = open(self.css_file_paths[i], "wb")
-            css_file.write(self.css_files[i].cssText)
-            css_file.close()
+        self.update_css()
 
         # folder_name = path.splitext(path.basename(save_path))[0]
         # will get permission error if there is a folder with name "folder_name"

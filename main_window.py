@@ -12,6 +12,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.set_defaults()
+        self.init_variables()
 
         self.setup_menubar()
         self.setup_webview()
@@ -76,7 +77,9 @@ class MainWindow(QMainWindow):
         control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
         control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
         control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        control_panel_layout.addWidget(QComboBox())
+        self.combo_box_style = QComboBox()
+        self.combo_box_style.currentTextChanged.connect(self.change_edit_style)
+        control_panel_layout.addWidget(self.combo_box_style)
         control_panel_layout.addWidget(QComboBox())
 
         self.control_panel.setLayout(control_panel_layout)
@@ -101,7 +104,37 @@ class MainWindow(QMainWindow):
         self.setFixedHeight(720)
         self.setFixedWidth(1280)
 
- 
+
+    def init_variables(self):
+        self.current_edit_style = None
+
+
+    # Connected to combo_box_style
+    def change_edit_style(self):
+        self.set_edit_style(self.combo_box_style.currentText())
+
+
+    def set_edit_style(self, name):
+        
+        # Restore original color
+        if self.current_edit_style != None:
+            self.file_manager.set_css_param(self.current_edit_style, 'color', self.last_color)
+        
+        self.current_edit_style = name
+        
+        # Remember original color
+        self.last_color = self.file_manager.get_css_param(self.current_edit_style, 'color')
+        self.file_manager.set_css_param(self.current_edit_style, 'color', "#ff0000")
+        print(self.file_manager.get_css_params_by_style_name(self.current_edit_style))
+        
+        self.update_view()
+
+
+    def update_view(self):
+        self.file_manager.update_css()
+        self.webview.reload()
+
+
     def next_page(self):
         self.show_page(self.current_page_nr+1)
 
@@ -111,7 +144,6 @@ class MainWindow(QMainWindow):
 
 
     def show_page(self, page_nr):
-
         self.current_page_nr, self.shown_url = self.file_manager.get_page(page_nr)
         self.webview.load(self.shown_url)
 
@@ -121,7 +153,7 @@ class MainWindow(QMainWindow):
         self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
         self.css_editor.setText(self.file_manager.get_stylesheet_text(0))
         self.show_page(4)
-        print('File opened')
+        self.combo_box_style.addItems(self.file_manager.get_css_style_names())
 
     
     def file_save(self):
