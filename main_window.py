@@ -131,25 +131,26 @@ class MainWindow(QMainWindow):
         self.page_nr_current = 0
         self.page_count = len(self.pathfinder.spine)
         print("TEST")
-        cssfiles = self.pathfinder.get_css_path_list()
-        for i in range(len(cssfiles)):
-            cssfiles[i] = cssutils.parseFile(cssfiles[i])
-        print(cssfiles)
+        css_file_paths = self.pathfinder.get_css_path_list()
+        css_files = []
+        for i in range(len(css_file_paths)):
+            css_files.append(cssutils.parseFile(css_file_paths[i]))
+        print(css_files)
 
-        for item in cssfiles[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
+        for item in css_files[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
             item.style.setProperty("color", "#00ff00")
             #for property in item.style.getProperties():
                 #if property.name == "color":
                 #    property.value = "#00ff00"
 
-        for item in cssfiles[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
+        for item in css_files[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
             for property in item.style.getProperties():
                 print(property)
 
-        print(cssfiles[1].cssText)
+        print(css_files[1].cssText)
 
-        #css_file = open(self.pathfinder.get_css_path(1), "wb")
-        #css_file.write(cssfiles[1].cssText)
+        css_file = open(css_file_paths[1], "wb")
+        css_file.write(css_files[1].cssText)
 
 
 
