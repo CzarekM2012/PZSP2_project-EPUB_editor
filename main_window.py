@@ -129,6 +129,13 @@ class MainWindow(QMainWindow):
         self.page_nr_current = 0
         self.page_count = len(self.pathfinder.spine)
 
+    def load_css(self) -> None:
+        css_file_path = path.join(self.edition_dir,
+                                  self.pathfinder.stylesheets[0])
+        with open(css_file_path) as file:
+            stylesheet = ''.join(file.readlines())
+        self.css_editor.setText(stylesheet)
+
     def save_book(self, save_path) -> None:
         # folder_name = path.splitext(path.basename(save_path))[0]
         # will get permission error if there is a folder with name "folder_name"
@@ -188,6 +195,7 @@ class MainWindow(QMainWindow):
         file_path = QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]
         self.original_file_path = path.abspath(file_path)
         self.load_book(self.original_file_path)
+        self.load_css()
         self.show_page(4)
         print('File opened')
 
