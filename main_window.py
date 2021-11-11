@@ -13,6 +13,8 @@ from gui_elements import *
 from reader import Reader
 from pathfinder import Pathfinder
 
+import cssutils
+
 class MainWindow(QMainWindow):
 
     def __init__(self, file_path):
@@ -67,6 +69,28 @@ class MainWindow(QMainWindow):
         self.pathfinder.search()
         self.page_nr_current = 0
         self.page_count = len(self.pathfinder.spine)
+        print("TEST")
+        cssfiles = self.pathfinder.get_css_path_list()
+        for i in range(len(cssfiles)):
+            cssfiles[i] = cssutils.parseFile(cssfiles[i])
+        print(cssfiles)
+
+        for item in cssfiles[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
+            item.style.setProperty("color", "#00ff00")
+            #for property in item.style.getProperties():
+                #if property.name == "color":
+                #    property.value = "#00ff00"
+
+        for item in cssfiles[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
+            for property in item.style.getProperties():
+                print(property)
+
+        print(cssfiles[1].cssText)
+
+        #css_file = open(self.pathfinder.get_css_path(1), "wb")
+        #css_file.write(cssfiles[1].cssText)
+
+
 
     def save_book(self, save_path) -> None:
         # folder_name = path.splitext(path.basename(save_path))[0]
