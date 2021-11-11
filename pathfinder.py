@@ -96,7 +96,10 @@ class Pathfinder:
     #    return self.get_absolute_paths(self.fonts)
 
     def get_css_path(self, index):
-        return self.get_absolute_paths([self.stylesheets[0]])[0]
+        return self.get_absolute_paths([self.stylesheets[index]])[0]
+
+    def get_html_doc_count(self):
+        return len(self.spine)
 
     '''def _load_metadata(self):
         container_root = self.container.getroot()
