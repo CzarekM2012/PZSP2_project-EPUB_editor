@@ -1,4 +1,5 @@
 from PySide6.QtCore import QUrl, Qt
+from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QWidget
 
@@ -13,10 +14,25 @@ class MyMenuBar(QMenuBar):
 
 
 class MyWebView(QWebEngineView):
-    def __init__(self, file_path):
+    def __init__(self):
         super().__init__()
+        self.setPage(MyWebEnginePage(self))
         self.setFixedWidth(600)
-        self.load(QUrl.fromLocalFile(file_path))
+        self.setContextMenuPolicy(Qt.NoContextMenu)
+
+    
+class MyWebEnginePage(QWebEnginePage):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def acceptNavigationRequest(self, url, type, isMainFrame) -> bool:
+        if type == QWebEnginePage.NavigationTypeLinkClicked:
+            return False
+        return super().acceptNavigationRequest(url, type, isMainFrame)
+
+    def __repr__(self):
+        return 'MyPage'
+
 
 
 class ControlPanel(QWidget):
