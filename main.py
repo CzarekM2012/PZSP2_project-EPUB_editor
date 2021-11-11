@@ -31,11 +31,7 @@ def main():
 
     # Just in case
     os.chdir(base_path)
-
-    #file_path = path.join(base_path, 'books', 'niezwyciezony.epub')
-
-    file_path = path.join(base_path, 'books', 'niezwyciężony', 'OEBPS', 'Text', 'index_split_003.html')
-    start_app(file_path)
+    start_app(base_path)
 
 
 if __name__ == '__main__':
