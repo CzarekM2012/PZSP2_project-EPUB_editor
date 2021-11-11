@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
     # Funkcje wykorzystywane prze QAction
     def file_open(self):
         self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
-        self.css_editor.setText(self.file_manager.get_stylesheet_text())
+        self.css_editor.setText(self.file_manager.get_stylesheet_text(0))
         self.show_page(4)
         print('File opened')
 

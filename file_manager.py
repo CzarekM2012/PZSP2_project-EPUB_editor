@@ -11,7 +11,7 @@ from pathfinder import Pathfinder
 class FileManager:
 
     def __init__(self):
-        self.stylesheet_text = None
+        self.css_files = []
         self.edition_dir = path.join(path.dirname(__file__), 'edit')
         self.pathfinder = Pathfinder(self.edition_dir)
 
@@ -36,48 +36,52 @@ class FileManager:
         book = ZipFile(self.load_path)
         book.extractall(self.edition_dir)
         book.close()
-        
+
         self.pathfinder.search()
-        css_file_paths = self.pathfinder.get_css_path_list()
-        css_files = []
-        for i in range(len(css_file_paths)):
-            css_files.append(cssutils.parseFile(css_file_paths[i]))
-        print(css_files)
-
-        for item in css_files[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
-            item.style.setProperty("color", "#00ff00")
-            #for property in item.style.getProperties():
-                #if property.name == "color":
-                #    property.value = "#00ff00"
-
-        for item in css_files[1].cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
-            for property in item.style.getProperties():
-                print(property)
-
-        print(css_files[1].cssText)
-
-        css_file = open(css_file_paths[1], "wb")
-        css_file.write(css_files[1].cssText)
+        self.css_file_paths = self.pathfinder.get_css_path_list()
+        
+        self.css_files = []
+        for css_path in self.css_file_paths:
+            self.css_files.append(cssutils.parseFile(css_path))
 
         print('File loaded')
 
 
-    def load_css(self):
-        css_file_path = path.join(self.edition_dir,
-                                  self.pathfinder.stylesheets[0])
-        with open(css_file_path) as file:
-            self.stylesheet_text = ''.join(file.readlines())
+    def get_css_style_names(self):
+        name_list = []
+        for file in self.css_files:
+            for item in file.cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
+                name_list.append(item.selectorText)
+        return name_list
 
-    def get_stylesheet_text(self):
-        if self.stylesheet_text == None:
-            self.load_css()
-        
-        return self.stylesheet_text
+    def get_css_style_by_name(self, name):
+        for file in self.css_files:
+            for item in file.cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
+                if name == item.selectorText:
+                    return item.style 
+        return None
+
+
+    def get_stylesheet_file(self, file_index):
+        return self.css_file[file_index]
+
+    def get_stylesheet_text(self, file_index):
+        return str(self.css_files[file_index].cssText, 'utf-8')
+
+    def get_css_file_count(self):
+        return len(self.css_files)
 
 
     def save_book(self, file_path):
 
         self.save_path = path.abspath(file_path)
+
+        # Save modified CSS to files
+        for i in range(self.get_css_file_count()):
+            print(self.get_stylesheet_text(i))
+            css_file = open(self.css_file_paths[i], "wb")
+            css_file.write(self.css_files[i].cssText)
+            css_file.close()
 
         # folder_name = path.splitext(path.basename(save_path))[0]
         # will get permission error if there is a folder with name "folder_name"
