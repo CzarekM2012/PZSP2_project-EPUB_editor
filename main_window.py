@@ -9,7 +9,7 @@ from file_manager import FileManager
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, file_path):
+    def __init__(self):
         super(MainWindow, self).__init__()
         self.set_defaults()
 

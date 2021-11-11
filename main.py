@@ -13,10 +13,10 @@ if(folder_name == "pzsp2"):
     debug = True
 
 
-def start_app(file_path):
+def start_app():
     app = QApplication(sys.argv)
     apply_stylesheet(app, theme='dark_blue.xml')
-    window = MainWindow(file_path)
+    window = MainWindow()
     window.show()
     
     app.exec()
@@ -31,7 +31,8 @@ def main():
 
     # Just in case
     os.chdir(base_path)
-    start_app(base_path)
+
+    start_app()
 
 
 if __name__ == '__main__':
