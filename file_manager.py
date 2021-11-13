@@ -2,6 +2,8 @@ from os import path, listdir, mkdir, unlink, walk
 import zipfile
 from zipfile import ZIP_DEFLATED, ZipFile
 from shutil import rmtree
+
+from cssutils.css.cssstylesheet import CSSStyleSheet
 from gui_elements import *
 
 import cssutils
@@ -40,17 +42,18 @@ class FileManager:
         self.pathfinder.search()
         self.css_file_paths = self.pathfinder.get_css_path_list()
         
+        self.load_css_files()
+
+        print('File loaded')
+
+    def load_css_files(self):
         self.css_files = []
         for css_path in self.css_file_paths:
             self.css_files.append(cssutils.parseFile(css_path))
 
-        print('File loaded')
-
-
     # Saves changes by overwriting edited css files
     def update_css(self):
         for i in range(self.get_css_file_count()):
-            print(self.get_stylesheet_text(i))
             css_file = open(self.css_file_paths[i], "wb")
             css_file.write(self.css_files[i].cssText)
             css_file.close()
@@ -64,6 +67,10 @@ class FileManager:
 
     def set_css_param(self, style_name, param_name, value):
         self.get_css_style_by_name(style_name).setProperty(param_name, value)
+
+
+    def get_css_file_paths(self):
+        return self.css_file_paths
 
 
     def get_css_style_names(self):
@@ -94,11 +101,50 @@ class FileManager:
         return param_list
 
 
-    def get_stylesheet_file(self, file_index):
-        return self.css_file[file_index]
+    def get_css_file(self, file_index):
+        return self.css_files[file_index]
 
-    def get_stylesheet_text(self, file_index):
+
+    def get_css_file_by_path(self, file_path):
+        for i in range(len(self.css_files)):
+            if self.css_file_paths[i] == file_path:
+                return self.css_files[i]
+
+
+    def get_css_text(self, file_index):
         return str(self.css_files[file_index].cssText, 'utf-8')
+    
+
+    def overwrite_css_file_with_text(self, file_path, text):
+
+        # Manually overwrite specified file
+        css_file = open(file_path, "w")
+        css_file.write(text)
+        css_file.close()
+
+        # Reload all CSS files
+        self.load_css_files()
+
+        #file = self.get_stylesheet_file_by_path(file_path)
+        #if file == None:
+        #    return
+        
+        #print(text)
+        #file.setCSSText(bytes(text, 'utf-8')) #TODO: Check encoding, probably need binary
+
+
+    def set_css_file_by_path(self, file_path, css_file):
+        for i in range(len(self.css_files)):
+            if self.css_file_paths[i] == file_path:
+                return self.css_files[i]
+
+
+    def get_css_text_by_path(self, file_path):
+        stylesheet = self.get_css_file_by_path(file_path)
+        if stylesheet == None:
+            return ""
+        return str(stylesheet.cssText, 'utf-8')
+        
 
     def get_css_file_count(self):
         return len(self.css_files)

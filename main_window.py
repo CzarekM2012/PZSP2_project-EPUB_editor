@@ -19,8 +19,6 @@ class MainWindow(QMainWindow):
         self.setup_left_panel()
         self.setup_layout()
 
-        self.file_manager = FileManager()
-
  
     def setup_menubar(self):
         self.menu = MyMenuBar()
@@ -66,7 +64,7 @@ class MainWindow(QMainWindow):
         self.left_panel = QWidget()
         left_panel_layout = QStackedLayout()
         left_panel_layout.addWidget(self.control_panel)
-        left_panel_layout.addWidget(self.css_editor)
+        left_panel_layout.addWidget(self.editor_panel)
 
         self.left_panel.setLayout(left_panel_layout)
 
@@ -74,19 +72,31 @@ class MainWindow(QMainWindow):
     def setup_control_panel(self):
         self.control_panel = QWidget()
         control_panel_layout = QVBoxLayout()
-        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
+
         self.combo_box_style = QComboBox()
         self.combo_box_style.currentTextChanged.connect(self.change_edit_style)
+        
         control_panel_layout.addWidget(self.combo_box_style)
         control_panel_layout.addWidget(QComboBox())
+        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
+        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
+        control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
 
         self.control_panel.setLayout(control_panel_layout)
 
 
     def setup_css_editor(self):
-        self.css_editor = CSSEditor()
+        self.editor_panel = QWidget()
+        editor_panel_layout = QVBoxLayout()
+
+        self.css_editor = CSSEditor()  # Needs to be created before combo_box, because combo_box changes editor's text (and triggers right after creation)
+        self.editor_combo_box_file = QComboBox()
+        self.editor_combo_box_file.currentTextChanged.connect(self.change_editor_file)
+        
+        editor_panel_layout.addWidget(self.editor_combo_box_file)
+        editor_panel_layout.addWidget(self.css_editor)
+
+        self.editor_panel.setLayout(editor_panel_layout)
 
 
     def setup_layout(self):
@@ -107,7 +117,14 @@ class MainWindow(QMainWindow):
 
     def init_variables(self):
         self.current_edit_style = None
+        self.edited_css_path = None
+        self.file_manager = FileManager()
 
+
+    # Connected to editor_combo_box_file
+    def change_editor_file(self):
+        print("TEST")
+        self.editor_set_file(self.editor_combo_box_file.currentText())
 
     # Connected to combo_box_style
     def change_edit_style(self):
@@ -125,7 +142,6 @@ class MainWindow(QMainWindow):
         # Remember original color
         self.last_color = self.file_manager.get_css_param(self.current_edit_style, 'color')
         self.file_manager.set_css_param(self.current_edit_style, 'color', "#ff0000")
-        print(self.file_manager.get_css_params_by_style_name(self.current_edit_style))
         
         self.update_view()
 
@@ -133,7 +149,6 @@ class MainWindow(QMainWindow):
     def update_view(self):
         self.file_manager.update_css()
         self.webview.reload()
-
 
     def next_page(self):
         self.show_page(self.current_page_nr+1)
@@ -148,12 +163,36 @@ class MainWindow(QMainWindow):
         self.webview.load(self.shown_url)
 
 
+    def editor_set_file(self, relative_path):
+
+        print(relative_path)
+
+        # Save the previous file
+        if self.edited_css_path != None:
+            self.editor_save_changes()
+
+        # No file specified (eg. action triggererd too early)
+        if relative_path == None or relative_path == "":
+            self.edited_css_path = None
+            self.css_editor.setText("")
+            return
+
+        self.css_editor.setText(self.file_manager.get_css_text_by_path(relative_path))
+        self.edited_css_path = relative_path
+        
+    
+    def editor_save_changes(self):
+        self.file_manager.overwrite_css_file_with_text(self.edited_css_path, self.css_editor.toPlainText())
+        #self.file_manager.update_css() # Not needed, overwrite() already writes changes to the file
+        self.update_view()
+
     # Funkcje wykorzystywane prze QAction
     def file_open(self):
         self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
-        self.css_editor.setText(self.file_manager.get_stylesheet_text(0))
+        self.editor_set_file(None)
         self.show_page(4)
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
+        self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
     
     def file_save(self):
