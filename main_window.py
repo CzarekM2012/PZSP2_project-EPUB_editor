@@ -7,6 +7,19 @@ from PySide6.QtCore import QUrl, Qt
 from gui_elements import *
 from file_manager import FileManager
 
+base_font_list = [
+    ("Arial", "sans-serif"),
+    ("Verdana", "sans-serif"),
+    ("Helvetica", "sans-serif"),
+    ("Tahoma", "sans-serif"),
+    ("Trebuchet MS", "sans-serif"),
+    ("Times New Roman", "serif"),
+    ("Georgia", "serif"),
+    ("Garamond", "serif"),
+    ("Courier New", "monospace"),
+    ("Brush Script MT", "cursive"),
+]
+
 class MainWindow(QMainWindow):
 
     def __init__(self):
@@ -75,15 +88,22 @@ class MainWindow(QMainWindow):
 
         self.combo_box_style = QComboBox()
         self.combo_box_style.currentTextChanged.connect(self.change_edit_style)
+
+        self.combo_box_font = QComboBox()
+        self.combo_box_font.currentTextChanged.connect(self.change_font)
+        self.combo_box_font.addItems(self.get_font_names())
         
         control_panel_layout.addWidget(self.combo_box_style)
-        control_panel_layout.addWidget(QComboBox())
+        control_panel_layout.addWidget(self.combo_box_font)
         control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
         control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
         control_panel_layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
 
         self.control_panel.setLayout(control_panel_layout)
 
+    def get_font_names(self):
+        return [item[0] for item in base_font_list]
+        
 
     def setup_css_editor(self):
         self.editor_panel = QWidget()
@@ -116,6 +136,7 @@ class MainWindow(QMainWindow):
 
 
     def init_variables(self):
+        self.current_page_nr = 0
         self.current_edit_style = None
         self.edited_css_path = None
         self.file_manager = FileManager()
@@ -123,8 +144,18 @@ class MainWindow(QMainWindow):
 
     # Connected to editor_combo_box_file
     def change_editor_file(self):
-        print("TEST")
         self.editor_set_file(self.editor_combo_box_file.currentText())
+
+    # Connected to combo_box_font
+    def change_font(self):
+        chosen_font = self.combo_box_font.currentText()
+        for font, backup_font in base_font_list:
+            if font == chosen_font:
+                self.file_manager.set_css_param(self.current_edit_style, 'font-family', f'"{font}", {backup_font}')
+                print(self.file_manager.get_css_param(self.current_edit_style, 'font-family'))
+                break
+        
+        self.update_view()
 
     # Connected to combo_box_style
     def change_edit_style(self):
@@ -196,6 +227,12 @@ class MainWindow(QMainWindow):
 
     
     def file_save(self):
+
+        # Restore selected font color
+        # TODO: Replace with a better mechanism, delete after font color change is added, or it won't save
+        if self.current_edit_style != None:
+            self.file_manager.set_css_param(self.current_edit_style, 'color', self.last_color)
+
         self.file_manager.save_book(QFileDialog.getSaveFileName(self, 'Save Epub', '', 'Epub Files (*.epub)')[0])
 
     
