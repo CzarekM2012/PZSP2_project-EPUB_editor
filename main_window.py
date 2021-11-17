@@ -149,6 +149,9 @@ class MainWindow(QMainWindow):
     # Connected to combo_box_font
     def change_font(self):
         chosen_font = self.combo_box_font.currentText()
+        if self.current_edit_style == None:
+            return
+            
         for font, backup_font in base_font_list:
             if font == chosen_font:
                 self.file_manager.set_css_param(self.current_edit_style, 'font-family', f'"{font}", {backup_font}')
