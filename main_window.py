@@ -222,9 +222,17 @@ class MainWindow(QMainWindow):
 
     # Funkcje wykorzystywane prze QAction
     def file_open(self):
-        self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
-        self.editor_set_file(None)
+        try:
+            self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
+        except PermissionError as e:
+            print(e)
+            return
+        
+        self.editor_set_file(None) # Need to select a CSS file
         self.show_page(4)
+
+        self.combo_box_style.clear()
+        self.editor_combo_box_file.clear()
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
         self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
@@ -235,11 +243,16 @@ class MainWindow(QMainWindow):
         # TODO: Replace with a better mechanism, delete after font color change is added, or it won't save
         if self.current_edit_style != None:
             self.file_manager.set_css_param(self.current_edit_style, 'color', self.last_color)
-
-        self.file_manager.save_book(QFileDialog.getSaveFileName(self, 'Save Epub', '', 'Epub Files (*.epub)')[0])
+        
+        try:
+            self.file_manager.save_book(QFileDialog.getSaveFileName(self, 'Save Epub', '', 'Epub Files (*.epub)')[0])
+        except PermissionError as e:
+            print(e)
+            return
 
     
     def change_view(self):
+        self.update_view()
         if self.left_panel.layout().currentIndex() == 0:
             self.left_panel.layout().setCurrentIndex(1)
             self.view_change_action.setText('Change view to basic editor')

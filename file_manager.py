@@ -16,6 +16,7 @@ class FileManager:
         self.css_files = []
         self.edition_dir = path.join(path.dirname(__file__), 'edit')
         self.pathfinder = Pathfinder(self.edition_dir)
+        self.prepare_edition_dir()
 
     def prepare_edition_dir(self):
         if path.isdir(self.edition_dir):
@@ -62,11 +63,19 @@ class FileManager:
 
 
     def get_css_param(self, style_name, param_name):
-        return self.get_css_style_by_name(style_name).getProperty(param_name)
+        style = self.get_css_style_by_name(style_name)
+        if style == None:
+            return
+        
+        return style.getPropertyValue(param_name)
 
 
     def set_css_param(self, style_name, param_name, value):
-        self.get_css_style_by_name(style_name).setProperty(param_name, value)
+        style = self.get_css_style_by_name(style_name)
+        if style == None:
+            return
+        #print(f"Param name: {param_name}, Value: {value}")
+        style.setProperty(param_name, value)
 
 
     def get_css_file_paths(self):
