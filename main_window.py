@@ -12,7 +12,7 @@ import threading
 
 HIGHLIGHT_COLOR_STRING = "#ffffab"
 
-base_font_list = [
+font_list = [
     ("Arial", "sans-serif"),
     ("Verdana", "sans-serif"),
     ("Helvetica", "sans-serif"),
@@ -100,7 +100,6 @@ class MainWindow(QMainWindow):
 
         self.combo_box_font = QComboBox()
         self.combo_box_font.currentTextChanged.connect(self.change_font)
-        self.combo_box_font.addItems(self.get_font_names())
         
         control_panel_layout.addWidget(self.combo_box_style)
         control_panel_layout.addWidget(self.combo_box_font)
@@ -111,7 +110,7 @@ class MainWindow(QMainWindow):
         self.control_panel.setLayout(control_panel_layout)
 
     def get_font_names(self):
-        return [item[0] for item in base_font_list]
+        return [item[0] for item in font_list]
         
 
     def setup_css_editor(self):
@@ -168,7 +167,12 @@ class MainWindow(QMainWindow):
         if style_name == "":
             return
             
-        for font, backup_font in base_font_list:
+        if chosen_font == "[None]":
+            self.file_manager.remove_css_param(style_name, 'font-family')
+            self.update_view()
+            return
+
+        for font, backup_font in font_list:
             if font == chosen_font:
                 self.file_manager.set_css_param(style_name, 'font-family', f'"{font}", {backup_font}')
                 print(self.file_manager.get_css_param(style_name, 'font-family'))
@@ -179,8 +183,61 @@ class MainWindow(QMainWindow):
 
     # Connected to combo_box_style
     def change_edit_style(self):
+        current_font = self.file_manager.get_css_param(self.get_current_style_name(), 'font-family')
+        
+        self.check_add_font(current_font)
+        
+        self.combo_box_font.clear()
+        self.combo_box_font.addItem("[None]")
+        self.combo_box_font.addItems(self.get_font_names())
+
+        for font_name, fallback_font in font_list:
+            if font_name in current_font:
+                index = self.combo_box_font.findText(font_name, Qt.MatchFixedString)
+                if index >= 0:
+                    self.combo_box_font.setCurrentIndex(index)
+
         self.update_view()
     
+
+    def check_add_font(self, font_desc):
+        """
+        Adds a font from a CSS descriptor like '"Font", another-font' to the font_list
+        First checks if such font already exists in the list
+        """
+        # TODO: Check CSS guidline compliance
+        if font_desc == "" or font_desc == None:
+            return
+
+        font_name = ""
+        fallback_font = "serif"
+        sign = ""
+        if '"' in font_desc:
+            sign = '"'
+        elif "'" in font_desc:
+            sign = "'"
+        else:
+            font_name = font_desc
+
+        if sign != "":
+            start = font_desc.find(sign) + len(sign)
+            end = font_desc.find(sign, start + len(sign))
+            font_name = font_desc[start:end]
+            
+            if "sans-serif" in font_desc[:start] or "sans-serif" in font_desc[end:]:
+                fallback_font = "sans-serif"
+            
+            elif "monospace" in font_desc[:start] or "monospace" in font_desc[end:]:
+                fallback_font = "monospace"
+
+            elif "cursive" in font_desc[:start] or "cursive" in font_desc[end:]:
+                fallback_font = "cursive"
+
+        font_tuple = (font_name, fallback_font)
+        if font_tuple not in font_list:
+            font_list.append(font_tuple)
+
+        
 
     def get_current_style_name(self):
         return str(self.combo_box_style.currentText())

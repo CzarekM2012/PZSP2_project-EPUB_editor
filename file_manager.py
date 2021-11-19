@@ -92,6 +92,12 @@ class FileManager:
         #print(f"Param name: {param_name}, Value: {value}")
         style.setProperty(param_name, value)
 
+    def remove_css_param(self, style_name, param_name):
+        style = self.get_css_style_by_name(style_name)
+        if style == None:
+            return
+        style.removeProperty(param_name)
+
 
     def get_css_file_paths(self):
         return self.css_file_paths
