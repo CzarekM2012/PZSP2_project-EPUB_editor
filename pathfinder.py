@@ -19,6 +19,10 @@ class Pathfinder:
     the unpacked .epub file
     '''
     def __init__(self, book_dir=None) -> None:
+        # Defined here to avoid errors when no file is loaded
+        self.spine = []
+        self.stylesheets = []
+        self._items = {}
         self.set_book_dir(book_dir=book_dir)
 
     def set_book_dir(self, book_dir=None) -> None:

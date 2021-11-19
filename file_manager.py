@@ -13,6 +13,7 @@ from pathfinder import Pathfinder
 class FileManager:
 
     def __init__(self):
+        self.load_path = None
         self.css_files = []
         self.edition_dir = path.join(path.dirname(__file__), 'edit')
         self.pathfinder = Pathfinder(self.edition_dir)
@@ -34,11 +35,23 @@ class FileManager:
             mkdir(self.edition_dir)
 
     def load_book(self, file_path):
+        """
+        Unpacks a zip from specified path into the editing directory.
+        Returns 0 if succeded, or a positive number otherwise
+        """
         self.load_path = path.abspath(file_path)
         self.prepare_edition_dir()
-        book = ZipFile(self.load_path)
-        book.extractall(self.edition_dir)
-        book.close()
+
+        try:
+            book = ZipFile(self.load_path)
+            book.extractall(self.edition_dir)
+            book.close()
+        except PermissionError as e:
+            print(f"Could not open file due to {e}")
+            self.load_path = None
+            self.css_files = []
+            self.pathfinder = Pathfinder(self.edition_dir)
+            return 1
 
         self.pathfinder.search()
         self.css_file_paths = self.pathfinder.get_css_path_list()
@@ -46,6 +59,7 @@ class FileManager:
         self.load_css_files()
 
         print('File loaded')
+        return 0
 
     def load_css_files(self):
         self.css_files = []
@@ -60,7 +74,8 @@ class FileManager:
             css_file.close()
 
 
-
+    def is_file_loaded(self):
+        return not self.load_path == None
 
     def get_css_param(self, style_name, param_name):
         style = self.get_css_style_by_name(style_name)
@@ -127,9 +142,12 @@ class FileManager:
     def overwrite_css_file_with_text(self, file_path, text):
 
         # Manually overwrite specified file
-        css_file = open(file_path, "w")
-        css_file.write(text)
-        css_file.close()
+        try:
+            css_file = open(file_path, "w")
+            css_file.write(text)
+            css_file.close()
+        except FileNotFoundError as e:
+            print(f"Could not save CSS file due to {e}")
 
         # Reload all CSS files
         self.load_css_files()
@@ -161,23 +179,33 @@ class FileManager:
 
     def save_book(self, file_path):
 
-        self.save_path = path.abspath(file_path)
+        save_path = path.abspath(file_path)
         self.update_css()
 
         # folder_name = path.splitext(path.basename(save_path))[0]
         # will get permission error if there is a folder with name "folder_name"
         # in save_dir
-        book = ZipFile(self.save_path, 'w', ZIP_DEFLATED)
-        for root, dirs, files in walk(self.edition_dir):
-            for file in files:
-                book.write(path.join(root, file),
-                           path.relpath(path.join(root, file),
-                           self.edition_dir))
-        book.close()
+        try:
+            book = ZipFile(save_path, 'w', ZIP_DEFLATED)
+
+            for root, dirs, files in walk(self.edition_dir):
+                for file in files:
+                    book.write(path.join(root, file),
+                               path.relpath(path.join(root, file),
+                               self.edition_dir))
+            book.close()
+        except PermissionError as e:
+            print(f"Could not save file due to {e}")
+            return
+        
         print('File saved')
 
     
     def get_page(self, page_nr):
+
+        # Because later checks still return index 0, if there are 0 pages
+        if self.get_page_count() == 0:
+            return 0, None
 
         # Check if requested page number is correct
         if page_nr < 0:

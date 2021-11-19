@@ -1,11 +1,16 @@
 
 from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 
 from gui_elements import *
 from file_manager import FileManager
+
+import time
+import threading
+
+HIGHLIGHT_COLOR_STRING = "#ffffab"
 
 base_font_list = [
     ("Arial", "sans-serif"),
@@ -26,7 +31,10 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.set_defaults()
         self.init_variables()
+        self.reload_interface()
 
+
+    def reload_interface(self):
         self.setup_menubar()
         self.setup_webview()
         self.setup_left_panel()
@@ -68,6 +76,7 @@ class MainWindow(QMainWindow):
  
     def setup_webview(self):
         self.webview = MyWebView()
+        self.webview.loadFinished.connect(self.on_webview_reload)
         self.webview.setFixedWidth(600)
 
  
@@ -110,10 +119,15 @@ class MainWindow(QMainWindow):
         editor_panel_layout = QVBoxLayout()
 
         self.css_editor = CSSEditor()  # Needs to be created before combo_box, because combo_box changes editor's text (and triggers right after creation)
+        
         self.editor_combo_box_file = QComboBox()
         self.editor_combo_box_file.currentTextChanged.connect(self.change_editor_file)
-        
+
+        self.editor_button_save = QPushButton("Save")
+        self.editor_button_save.clicked.connect(self.editor_save_changes)
+
         editor_panel_layout.addWidget(self.editor_combo_box_file)
+        editor_panel_layout.addWidget(self.editor_button_save)
         editor_panel_layout.addWidget(self.css_editor)
 
         self.editor_panel.setLayout(editor_panel_layout)
@@ -137,7 +151,6 @@ class MainWindow(QMainWindow):
 
     def init_variables(self):
         self.current_page_nr = 0
-        self.current_edit_style = None
         self.edited_css_path = None
         self.file_manager = FileManager()
 
@@ -146,43 +159,60 @@ class MainWindow(QMainWindow):
     def change_editor_file(self):
         self.editor_set_file(self.editor_combo_box_file.currentText())
 
+
     # Connected to combo_box_font
     def change_font(self):
+        style_name = self.get_current_style_name()
+
         chosen_font = self.combo_box_font.currentText()
-        if self.current_edit_style == None:
+        if style_name == "":
             return
             
         for font, backup_font in base_font_list:
             if font == chosen_font:
-                self.file_manager.set_css_param(self.current_edit_style, 'font-family', f'"{font}", {backup_font}')
-                print(self.file_manager.get_css_param(self.current_edit_style, 'font-family'))
+                self.file_manager.set_css_param(style_name, 'font-family', f'"{font}", {backup_font}')
+                print(self.file_manager.get_css_param(style_name, 'font-family'))
                 break
         
         self.update_view()
 
+
     # Connected to combo_box_style
     def change_edit_style(self):
-        self.set_edit_style(self.combo_box_style.currentText())
-
-
-    def set_edit_style(self, name):
-        
-        # Restore original color
-        if self.current_edit_style != None:
-            self.file_manager.set_css_param(self.current_edit_style, 'color', self.last_color)
-        
-        self.current_edit_style = name
-        
-        # Remember original color
-        self.last_color = self.file_manager.get_css_param(self.current_edit_style, 'color')
-        self.file_manager.set_css_param(self.current_edit_style, 'color', "#ff0000")
-        
         self.update_view()
+    
+
+    def get_current_style_name(self):
+        return str(self.combo_box_style.currentText())
 
 
     def update_view(self):
+        """
+        Updates the text display on the right side.
+        Also applies temporary changes like currently-edited style highlight 
+        """
+        style_name = self.get_current_style_name()
+
+        # Highlight chosen style when control_panel is shown
+        if self.left_panel.layout().currentIndex() == 0 and style_name != "":
+
+            self.last_color = self.file_manager.get_css_param(style_name, 'background-color')
+            self.file_manager.set_css_param(style_name, 'background-color', HIGHLIGHT_COLOR_STRING)
+            self.temporary_changes = True
+
+            self.file_manager.update_css()
+            self.webview.reload()
+
+            self.file_manager.set_css_param(style_name, 'background-color', self.last_color)
+            return
+
+        # No temporary changes, just save and draw
         self.file_manager.update_css()
         self.webview.reload()
+
+    def on_webview_reload(self):
+        self.file_manager.update_css()
+        self.temporary_changes = False
 
     def next_page(self):
         self.show_page(self.current_page_nr+1)
@@ -194,7 +224,8 @@ class MainWindow(QMainWindow):
 
     def show_page(self, page_nr):
         self.current_page_nr, self.shown_url = self.file_manager.get_page(page_nr)
-        self.webview.load(self.shown_url)
+        if not self.shown_url == None:
+            self.webview.load(self.shown_url)
 
 
     def editor_set_file(self, relative_path):
@@ -202,8 +233,8 @@ class MainWindow(QMainWindow):
         print(relative_path)
 
         # Save the previous file
-        if self.edited_css_path != None:
-            self.editor_save_changes()
+        #if self.edited_css_path != None:
+        #    self.editor_save_changes()
 
         # No file specified (eg. action triggererd too early)
         if relative_path == None or relative_path == "":
@@ -222,10 +253,8 @@ class MainWindow(QMainWindow):
 
     # Funkcje wykorzystywane prze QAction
     def file_open(self):
-        try:
-            self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
-        except PermissionError as e:
-            print(e)
+        if self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]) != 0:
+            self.file_close()
             return
         
         self.editor_set_file(None) # Need to select a CSS file
@@ -239,23 +268,21 @@ class MainWindow(QMainWindow):
     
     def file_save(self):
 
-        # Restore selected font color
-        # TODO: Replace with a better mechanism, delete after font color change is added, or it won't save
-        if self.current_edit_style != None:
-            self.file_manager.set_css_param(self.current_edit_style, 'color', self.last_color)
-        
-        try:
-            self.file_manager.save_book(QFileDialog.getSaveFileName(self, 'Save Epub', '', 'Epub Files (*.epub)')[0])
-        except PermissionError as e:
-            print(e)
+        if not self.file_manager.is_file_loaded():
             return
-
+        
+        self.file_manager.save_book(QFileDialog.getSaveFileName(self, 'Save Epub', '', 'Epub Files (*.epub)')[0])
+        
+    def file_close(self):
+        self.reload_interface()
+        
     
     def change_view(self):
-        self.update_view()
         if self.left_panel.layout().currentIndex() == 0:
             self.left_panel.layout().setCurrentIndex(1)
             self.view_change_action.setText('Change view to basic editor')
         else:
             self.left_panel.layout().setCurrentIndex(0)
             self.view_change_action.setText('Change view to text editor')
+        
+        self.update_view()
