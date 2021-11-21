@@ -53,7 +53,15 @@ class FileManager:
             self.pathfinder = Pathfinder(self.edition_dir)
             return 1
 
-        self.pathfinder.search()
+        try:
+            self.pathfinder.search()
+        except Exception as e:
+            print(f"Could not open file due to {e}")
+            self.load_path = None
+            self.css_files = []
+            self.pathfinder = Pathfinder(self.edition_dir)
+            return 2
+
         self.css_file_paths = self.pathfinder.get_css_path_list()
         
         self.load_css_files()
