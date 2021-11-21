@@ -1,6 +1,6 @@
 
 from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton
+from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 
@@ -312,6 +312,7 @@ class MainWindow(QMainWindow):
     def file_open(self):
         if self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]) != 0:
             self.file_close()
+            self.file_open_error()
             return
         
         self.editor_set_file(None) # Need to select a CSS file
@@ -322,7 +323,14 @@ class MainWindow(QMainWindow):
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
         self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
-    
+
+    def file_open_error(self):
+        error = QMessageBox()
+        error.setText("ERROR - could not open file. Not a valid EPUB.")
+        error.setWindowTitle("Error")
+        error.exec()
+
+
     def file_save(self):
 
         if not self.file_manager.is_file_loaded():
