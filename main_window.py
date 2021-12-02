@@ -1,5 +1,5 @@
 
-from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtGui import QAction, QFont, QKeySequence
 from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
 
     def reload_interface(self):
         self.setup_menubar()
-        self.setup_webview()
+        self.setup_right_panel()
         self.setup_left_panel()
         self.setup_layout()
 
@@ -73,11 +73,37 @@ class MainWindow(QMainWindow):
         prev_page_action.triggered.connect(self.prev_page)
         self.menu.view_menu.addAction(prev_page_action)
 
+
+    def setup_right_panel(self):
+        self.setup_webview()
+        self.setup_page_control_buttons()
+        self.right_panel = QWidget()
+        right_panel_layout = QVBoxLayout()
+        right_panel_layout.setContentsMargins(10,0,10,10)
+        right_panel_layout.addWidget(self.page_control_buttons)
+        right_panel_layout.addWidget(self.webview)
+        self.right_panel.setLayout(right_panel_layout)
  
+
     def setup_webview(self):
         self.webview = MyWebView()
         self.webview.loadFinished.connect(self.on_webview_reload)
-        self.webview.setFixedWidth(600)
+
+    
+    def setup_page_control_buttons(self):
+        self.page_control_buttons = QWidget()
+        self.page_control_buttons.setMaximumHeight(50)
+        page_control_buttons_layout = QHBoxLayout()
+        page_control_buttons_layout.setContentsMargins(0,0,0,0)
+
+        font = QFont()
+        font.setPointSize(20)
+        self.prev_page_button = QPushButton(text='◀', font=font)
+        page_control_buttons_layout.addWidget(self.prev_page_button)
+        self.next_page_button = QPushButton(text='▶', font=font)
+        page_control_buttons_layout.addWidget(self.next_page_button)
+
+        self.page_control_buttons.setLayout(page_control_buttons_layout)
 
  
     def setup_left_panel(self):
@@ -135,7 +161,7 @@ class MainWindow(QMainWindow):
     def setup_layout(self):
         main_layout = QHBoxLayout()
         main_layout.addWidget(self.left_panel)
-        main_layout.addWidget(self.webview)
+        main_layout.addWidget(self.right_panel)
         
         self.central_widget = QWidget()
         self.central_widget.setLayout(main_layout)
