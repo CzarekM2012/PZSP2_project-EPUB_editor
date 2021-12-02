@@ -99,8 +99,10 @@ class MainWindow(QMainWindow):
         font = QFont()
         font.setPointSize(20)
         self.prev_page_button = QPushButton(text='◀', font=font)
+        self.prev_page_button.clicked.connect(self.prev_page)
         page_control_buttons_layout.addWidget(self.prev_page_button)
         self.next_page_button = QPushButton(text='▶', font=font)
+        self.next_page_button.clicked.connect(self.next_page)
         page_control_buttons_layout.addWidget(self.next_page_button)
 
         self.page_control_buttons.setLayout(page_control_buttons_layout)
