@@ -1,25 +1,24 @@
-from PySide6.QtWidgets import QApplication, QWidget  # type:ignore
-from PySide6.QtWebEngineWidgets import QWebEngineView  # type:ignore
-from PySide6.QtCore import QByteArray, QUrl  # type:ignore
-from PySide6.QtWebEngineQuick import QtWebEngineQuick  # type:ignore
+from PySide6.QtWidgets import QApplication, QStyleFactory
 
 # Only needed for access to command line arguments
 import sys
 import os
 import os.path as path
+from main_window import MainWindow
+from qt_material import apply_stylesheet
 
 debug = False
 folder_name = path.split(path.dirname(__file__))[1]
 if(folder_name == "pzsp2"):
     debug = True
 
-def start_app(file_path):
-    app = QApplication(sys.argv)
-    window = QWebEngineView()
 
-    # Using load() instead of setContent() fixes file not found problems somehow
-    window.load(QUrl.fromLocalFile(file_path))
+def start_app():
+    app = QApplication(sys.argv)
+    apply_stylesheet(app, theme='dark_blue.xml')
+    window = MainWindow()
     window.show()
+    
     app.exec()
 
 
@@ -29,13 +28,12 @@ def main():
 
     if not debug:
         base_path = os.path.split(base_path)[0]
-    
+
     # Just in case
     os.chdir(base_path)
 
-    nav_path = path.join(base_path, 'books', 'pantadeusz', 'nav.xhtml')
-    start_app(nav_path)
+    start_app()
 
 
-
-main()
+if __name__ == '__main__':
+    main()
