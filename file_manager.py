@@ -52,6 +52,12 @@ class FileManager:
             self.css_files = []
             self.pathfinder = Pathfinder(self.edition_dir)
             return 1
+        except zipfile.BadZipFile as e:
+            print(f"Could not open file due to {e}")
+            self.load_path = None
+            self.css_files = []
+            self.pathfinder = Pathfinder(self.edition_dir)
+            return 2
 
         try:
             self.pathfinder.search()

@@ -1,6 +1,6 @@
 from PySide6.QtGui import QAction, QFont, QKeySequence
 from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
-from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
+# from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 
@@ -473,7 +473,11 @@ class MainWindow(QMainWindow):
 
     # Funkcje wykorzystywane prze QAction
     def file_open(self):
-        if self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]) != 0:
+        opened = self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
+        if opened == 1:
+            self.file_close()
+            return
+        elif opened == 2:
             self.file_close()
             self.file_open_error()
             return
