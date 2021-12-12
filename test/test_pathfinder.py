@@ -135,3 +135,18 @@ class TestPathfinder(unittest.TestCase):
         self.assertEqual(self.test_pathfinder.spine[0], 'Page01.xhtml')
         self.assertEqual(self.test_pathfinder.spine[1], 'Page02.xhtml')
         self.assertEqual(self.test_pathfinder.spine[2], 'Page03.xhtml')
+
+    def test_search(self) -> None:
+        test_dir = norm_join_paths(self.test_dirs_dir, 'single_rootfile')
+
+        self.test_pathfinder.set_book_dir(test_dir)
+        self.test_pathfinder.search()
+
+        self.assertEqual(self.test_pathfinder.spine[0],
+                         norm_join_paths('OEBPS', 'Page01.xhtml'))
+        self.assertEqual(self.test_pathfinder.spine[1],
+                         norm_join_paths('OEBPS', 'Page02.xhtml'))
+        self.assertEqual(self.test_pathfinder.spine[2],
+                         norm_join_paths('OEBPS', 'Page03.xhtml'))
+        self.assertEqual(self.test_pathfinder.stylesheets[0],
+                         norm_join_paths('OEBPS', 'css', 'styles.css'))
