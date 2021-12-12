@@ -53,8 +53,8 @@ class Pathfinder:
         try:
             meta_inf = self._read('META-INF/container.xml')
         except FileNotFoundError as e:
-            raise FileNotFoundError(strerror='This ".epub" file does not\
-conform to the standard and therefore cannot be read') from e
+            raise FileNotFoundError('This ".epub" file does not conform to the\
+standard and therefore cannot be read') from e
         tree = self._parse_string(meta_inf)
 
         for root_file in \
