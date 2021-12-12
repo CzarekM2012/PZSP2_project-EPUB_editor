@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="01" />
+  </head>
+  <docTitle>
+    <text>Epub Editor user manual</text>
+  </docTitle>
+  <navMap>
+    <navPoint id="navPoint-1">
+      <navLabel>
+        <text>Page 01</text>
+      </navLabel>
+      <content src="Page01.xhtml" />
+    </navPoint>
+    <navPoint id="navPoint-2">
+      <navLabel>
+        <text>Page 02</text>
+      </navLabel>
+      <content src="Page02.xhtml" />
+    </navPoint>
+    <navPoint id="navPoint-3">
+      <navLabel>
+        <text>Page 03</text>
+      </navLabel>
+      <content src="Page03.xhtml" />
+    </navPoint>
+  </navMap>
+</ncx>
