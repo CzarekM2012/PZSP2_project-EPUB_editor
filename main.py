@@ -15,8 +15,9 @@ if(folder_name == "pzsp2"):
 
 def start_app():
     app = QApplication(sys.argv)
+    screen_size = app.primaryScreen().availableGeometry().size()
     apply_stylesheet(app, theme='dark_blue.xml')
-    window = MainWindow()
+    window = MainWindow(screen_size)
     window.show()
     
     app.exec()

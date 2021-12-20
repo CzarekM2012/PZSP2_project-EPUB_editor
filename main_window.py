@@ -1,5 +1,5 @@
-from PySide6.QtGui import QAction, QFont, QKeySequence
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
+from PySide6.QtGui import QAction, QDesktopServices, QFont, QKeySequence, QScreen
+from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QVBoxLayout, QWidget, QPushButton, QMessageBox
 # from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
@@ -52,8 +52,9 @@ def hex_to_rgb(hex_string):
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, screen_size):
         super(MainWindow, self).__init__()
+        self.screen_size = screen_size
         self.set_defaults()
         self.init_variables()
         self.reload_interface()
@@ -227,6 +228,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Edytor EPUB")
         # self.setFixedHeight(720)
         # self.setFixedWidth(1280)
+        self.resize(self.screen_size * 0.7)
 
 
     def init_variables(self):
