@@ -137,6 +137,7 @@ class MainWindow(QMainWindow):
         self.setup_control_panel()
         self.setup_css_editor()
         self.left_panel = QWidget()
+        self.left_panel.setFixedWidth(400)
         left_panel_layout = QStackedLayout()
         left_panel_layout.addWidget(self.control_panel)
         left_panel_layout.addWidget(self.editor_panel)
@@ -224,8 +225,8 @@ class MainWindow(QMainWindow):
 
     def set_defaults(self):
         self.setWindowTitle("Edytor EPUB")
-        self.setFixedHeight(720)
-        self.setFixedWidth(1280)
+        # self.setFixedHeight(720)
+        # self.setFixedWidth(1280)
 
 
     def init_variables(self):

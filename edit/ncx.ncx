@@ -1,0 +1,64 @@
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="0a355c49-3758-4810-96e7-f840f81976e6"/>
+    <meta content="1" name="dtb:depth"/>
+    <meta content="0" name="dtb:totalPageCount"/>
+    <meta content="0" name="dtb:maxPageNumber"/>
+  </head>
+  <docTitle>
+    <text>M+T</text>
+  </docTitle>
+  <docAuthor>
+    <text>Aleksandra Piekarzewicz</text>
+  </docAuthor>
+  <navMap>
+    <navPoint id="c001" playOrder="1">
+      <navLabel>
+        <text>Strona tytu&#322;owa</text>
+      </navLabel>
+      <content src="c001.xhtml"/>
+    </navPoint>
+    <navPoint id="c002" playOrder="2">
+      <navLabel>
+        <text>Aleksandra Piekarzewicz | 2018</text>
+      </navLabel>
+      <content src="c002.xhtml"/>
+    </navPoint>
+    <navPoint id="c003" playOrder="3">
+      <navLabel>
+        <text>M+T</text>
+      </navLabel>
+      <content src="c003.xhtml"/>
+    </navPoint>
+    <navPoint id="c004" playOrder="4">
+      <navLabel>
+        <text>M+T 2: GDZIE REKIN NIE MO&#379;E...</text>
+      </navLabel>
+      <content src="c004.xhtml"/>
+    </navPoint>
+    <navPoint id="c005" playOrder="5">
+      <navLabel>
+        <text>K&#321;OPOTLIWE ARCYDZIE&#321;O</text>
+      </navLabel>
+      <content src="c005.xhtml"/>
+    </navPoint>
+    <navPoint id="c006" playOrder="6">
+      <navLabel>
+        <text>PIEKIELNA PODR&#211;&#379; ZOE UZANNY</text>
+      </navLabel>
+      <content src="c006.xhtml"/>
+    </navPoint>
+    <navPoint id="c007" playOrder="7">
+      <navLabel>
+        <text>FINIS INFERNUM</text>
+      </navLabel>
+      <content src="c007.xhtml"/>
+    </navPoint>
+    <navPoint id="c008" playOrder="8">
+      <navLabel>
+        <text>M+T 3: GRANDE FINALE</text>
+      </navLabel>
+      <content src="c008.xhtml"/>
+    </navPoint>
+  </navMap>
+</ncx>

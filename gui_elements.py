@@ -17,7 +17,7 @@ class MyWebView(QWebEngineView):
     def __init__(self):
         super().__init__()
         self.setPage(MyWebEnginePage(self))
-        self.setFixedWidth(600)
+        self.setMinimumWidth(400)
         self.setContextMenuPolicy(Qt.NoContextMenu)
 
     
