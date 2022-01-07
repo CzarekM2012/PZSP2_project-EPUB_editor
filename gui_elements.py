@@ -21,7 +21,7 @@ class MyWebView(QWebEngineView):
         self.setMinimumWidth(400)
         self.setContextMenuPolicy(Qt.NoContextMenu)
 
-    
+
 class MyWebEnginePage(QWebEnginePage):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -33,7 +33,6 @@ class MyWebEnginePage(QWebEnginePage):
 
     def __repr__(self):
         return 'MyPage'
-
 
 
 class ControlPanel(QWidget):

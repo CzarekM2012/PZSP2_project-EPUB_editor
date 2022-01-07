@@ -8,14 +8,14 @@ class Highlighter(QSyntaxHighlighter):
 
         self._mappings = {}
 
-    def add_mapping(self, pattern, format):
-        self._mappings[pattern] = format
+    def add_mapping(self, pattern, style):
+        self._mappings[pattern] = style
 
     def highlightBlock(self, text):
-        for pattern, format in self._mappings.items():
+        for pattern, style in self._mappings.items():
             for match in re.finditer(pattern, text):
                 start, end = match.span()
-                self.setFormat(start, end - start, format)
+                self.setFormat(start, end - start, style)
 
     def setup(self):
         value_format = QTextCharFormat()
