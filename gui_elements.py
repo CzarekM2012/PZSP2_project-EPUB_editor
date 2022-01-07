@@ -2,6 +2,7 @@ from PySide6.QtCore import QUrl, Qt
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QWidget
+from highlighter import Highlighter
 
 
 class MyMenuBar(QMenuBar):
@@ -17,7 +18,7 @@ class MyWebView(QWebEngineView):
     def __init__(self):
         super().__init__()
         self.setPage(MyWebEnginePage(self))
-        self.setFixedWidth(600)
+        self.setMinimumWidth(400)
         self.setContextMenuPolicy(Qt.NoContextMenu)
 
     
@@ -51,3 +52,6 @@ class ControlPanel(QWidget):
 class CSSEditor(QTextEdit):
     def __init__(self):
         super().__init__()
+        self.setTextColor("white")
+        self.highlighter = Highlighter()
+        self.highlighter.setup()

@@ -1,5 +1,5 @@
-from PySide6.QtGui import QAction, QFont, QKeySequence
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
+from PySide6.QtGui import QAction, QDesktopServices, QFont, QKeySequence, QScreen
+from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QVBoxLayout, QWidget, QPushButton, QMessageBox
 # from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
@@ -52,8 +52,9 @@ def hex_to_rgb(hex_string):
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, screen_size):
         super(MainWindow, self).__init__()
+        self.screen_size = screen_size
         self.set_defaults()
         self.init_variables()
         self.reload_interface()
@@ -137,6 +138,7 @@ class MainWindow(QMainWindow):
         self.setup_control_panel()
         self.setup_css_editor()
         self.left_panel = QWidget()
+        self.left_panel.setFixedWidth(400)
         left_panel_layout = QStackedLayout()
         left_panel_layout.addWidget(self.control_panel)
         left_panel_layout.addWidget(self.editor_panel)
@@ -224,8 +226,9 @@ class MainWindow(QMainWindow):
 
     def set_defaults(self):
         self.setWindowTitle("Edytor EPUB")
-        self.setFixedHeight(720)
-        self.setFixedWidth(1280)
+        # self.setFixedHeight(720)
+        # self.setFixedWidth(1280)
+        self.resize(self.screen_size * 0.7)
 
 
     def init_variables(self):
@@ -463,6 +466,7 @@ class MainWindow(QMainWindow):
             return
 
         self.css_editor.setText(self.file_manager.get_css_text_by_path(relative_path))
+        self.css_editor.highlighter.setDocument(self.css_editor.document())
         self.edited_css_path = relative_path
         
     
