@@ -466,6 +466,7 @@ class MainWindow(QMainWindow):
             return
 
         self.css_editor.setText(self.file_manager.get_css_text_by_path(relative_path))
+        self.css_editor.highlighter.setDocument(self.css_editor.document())
         self.edited_css_path = relative_path
         
     
