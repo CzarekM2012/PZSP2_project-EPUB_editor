@@ -8,9 +8,6 @@ from PySide6.QtCore import QUrl, Qt
 from gui_elements import *
 from file_manager import FileManager
 
-import time
-import threading
-
 HIGHLIGHT_COLOR_STRING = "#ffffab"
 
 font_list = [
@@ -479,10 +476,13 @@ class MainWindow(QMainWindow):
 
     # Funkcje wykorzystywane prze QAction
     def file_open(self, file=''):
+        opened = 0
+
         if file:
             opened = self.file_manager.load_book(file)
         else:
             opened = self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
+        
         if opened == 1:
             self.file_close()
             return
@@ -492,13 +492,13 @@ class MainWindow(QMainWindow):
             return
         
         self.editor_set_file(None) # Need to select a CSS file
-        self.show_page(4)
 
         self.combo_box_style.clear()
         self.editor_combo_box_file.clear()
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
         self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
+        self.show_page(0)
 
     def file_open_error(self):
         error = QMessageBox()
