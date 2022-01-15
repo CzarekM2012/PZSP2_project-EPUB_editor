@@ -1,8 +1,8 @@
 from PySide6.QtCore import QUrl, Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QDoubleValidator
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton
+from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QLineEdit
 from highlighter import Highlighter
 from utility import hex_to_rgb, rgb_to_hex
 
@@ -128,8 +128,6 @@ class ColorBox(QWidget):
         self.set_color_values(0, 0, 0)
         self.set_color_label(f"No color specified")
 
-    
-
         
 class ColorSlider(QSlider):
     def __init__(self):
@@ -138,6 +136,7 @@ class ColorSlider(QSlider):
         self.setMinimum(0)
         self.setMaximum(255)
         self.setSingleStep(1)
+
 
 class ButtonBox(QWidget):
     def __init__(self):
@@ -167,4 +166,23 @@ class ButtonBox(QWidget):
         layout.addWidget(self.italic_button)
         layout.addWidget(self.underline_button)
         layout.addWidget(self.strikeout_button)
+        self.setLayout(layout)
+
+
+class FontSizePicker(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedHeight(50)
+        layout = QHBoxLayout()
+
+        self.decrease_button = QPushButton('-')
+        self.increase_button = QPushButton('+')
+        self.size_field = QLineEdit()
+        self.size_field.setValidator(QDoubleValidator(0, 500, 3))
+        self.unit_picker = QComboBox()
+
+        layout.addWidget(self.decrease_button)
+        layout.addWidget(self.increase_button)
+        layout.addWidget(self.size_field)
+        layout.addWidget(self.unit_picker)
         self.setLayout(layout)

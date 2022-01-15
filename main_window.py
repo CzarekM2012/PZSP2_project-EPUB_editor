@@ -123,12 +123,14 @@ class MainWindow(QMainWindow):
         self.combo_box_font.currentTextChanged.connect(self.change_font)
 
         self.button_box = ButtonBox()
+        self.font_size_picker = FontSizePicker()
         
         self.color_box = ColorBox(self.change_color_slider, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
         control_panel_layout.addWidget(self.combo_box_font)
         control_panel_layout.addWidget(self.button_box)
+        control_panel_layout.addWidget(self.font_size_picker)
         control_panel_layout.addWidget(self.color_box)
 
         self.control_panel.setLayout(control_panel_layout)
