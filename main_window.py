@@ -8,6 +8,9 @@ from PySide6.QtCore import QUrl, Qt
 from gui_elements import *
 from file_manager import FileManager
 
+RESULT_SUCCESS = 0 # Return value
+RESULT_CANCEL = 2
+
 HIGHLIGHT_COLOR_STRING = "#ffffab"
 
 font_list = [
@@ -58,6 +61,15 @@ class MainWindow(QMainWindow):
         self.reload_interface()
         self.file_open(path.join(path.dirname(__file__), 'books/manual.epub'))
 
+    def closeEvent(self, evnt):
+        print("Closing")
+
+        result = self.file_save_prompt()
+        if result == RESULT_CANCEL:
+            evnt.ignore()
+            return
+        
+        super(MainWindow, self).closeEvent(evnt)
 
     def reload_interface(self):
         self.setup_menubar()
@@ -235,12 +247,12 @@ class MainWindow(QMainWindow):
         self.edited_css_path = None
         self.file_manager = FileManager()
 
-    def reload_editor_file(self):
-        self.editor_set_file(self.editor_combo_box_file.currentText())
+    def reload_editor_file(self, force=False):
+        return self.editor_set_file(self.editor_combo_box_file.currentText(), force)
 
     # Connected to editor_combo_box_file
     def change_editor_file(self):
-        self.editor_set_file(self.editor_combo_box_file.currentText())
+        return self.editor_set_file(self.editor_combo_box_file.currentText())
 
 
     # Connected to combo_box_font
@@ -450,29 +462,46 @@ class MainWindow(QMainWindow):
             self.webview.load(self.shown_url)
 
 
-    def editor_set_file(self, relative_path):
+    # Returns 0 if succeded, otherwise a positive number indicating an error
+    def editor_set_file(self, relative_path, force=False):   # force is used to reload file when user switches to editor, because path is the same
+        #print(f"Setting editor file path from {self.edited_css_path} to {relative_path} relative_path")
 
-        print(relative_path)
+        # Ask to save the previous file, doesn't trigger when toggling from or to empty file to prevent misfires when loading new files
+        if self.is_editor_file_changed() and self.edited_css_path != None and relative_path != None and not force:
+            choice = self.editor_save_prompt()
+            
+            if choice == QMessageBox.Save:
+                self.editor_save_changes()
+            elif choice == QMessageBox.Cancel:
+                return RESULT_CANCEL
 
-        # Save the previous file
-        #if self.edited_css_path != None:
-        #    self.editor_save_changes()
+        # Already handled by checkbox, leaving it here in case it will become useful
+        # Switched back to the same file, nothing to do
+        #if relative_path == self.edited_css_path and not force:
+        #    return 1
 
         # No file specified (eg. action triggererd too early)
         if relative_path == None or relative_path == "":
             self.edited_css_path = None
             self.css_editor.setText("")
-            return
+            return 3
 
         self.css_editor.setText(self.file_manager.get_css_text_by_path(relative_path))
         self.css_editor.highlighter.setDocument(self.css_editor.document())
         self.edited_css_path = relative_path
+
+        return 0
         
+
+    def is_editor_file_changed(self):
+        return not self.css_editor.toPlainText() == self.file_manager.get_css_text_by_path(self.edited_css_path)
     
+
     def editor_save_changes(self):
         self.file_manager.overwrite_css_file_with_text(self.edited_css_path, self.css_editor.toPlainText())
         #self.file_manager.update_css() # Not needed, overwrite() already writes changes to the file
         self.update_view()
+
 
     # Funkcje wykorzystywane prze QAction
     def file_open(self, file=''):
@@ -501,10 +530,27 @@ class MainWindow(QMainWindow):
         self.show_page(0)
 
     def file_open_error(self):
-        error = QMessageBox()
-        error.setText("ERROR - could not open file. Not a valid EPUB.")
-        error.setWindowTitle("Error")
-        error.exec()
+        self.display_prompt("Error", "ERROR - could not open file. Not a valid EPUB.", QMessageBox.Ok)
+
+    # Returns a value to check if user wants to proceed or cancel, can also save changes
+    def file_save_prompt(self):
+        choice = self.display_prompt("Save EPUB", "Are you sure you want to leave this file?\n\nAll unsaved changes will be lost!", QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+        if choice == QMessageBox.Save:
+            self.file_save()
+        elif choice == QMessageBox.Discard:
+            return RESULT_SUCCESS
+
+        return RESULT_CANCEL
+
+    def editor_save_prompt(self):
+        return self.display_prompt("Save CSS file", "Some changes have not been saved", QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+
+    def display_prompt(self, title, message, button_flags):
+        prompt = QMessageBox()
+        prompt.setWindowTitle(title)
+        prompt.setText(message)
+        prompt.setStandardButtons(button_flags)
+        return prompt.exec()
 
 
     def file_save(self):
@@ -520,10 +566,15 @@ class MainWindow(QMainWindow):
     
     def change_view(self):
         if self.left_panel.layout().currentIndex() == 0:
-            self.reload_editor_file()
+            self.reload_editor_file(force=True)
             self.left_panel.layout().setCurrentIndex(1)
             self.view_change_action.setText('Change view to basic editor')
         else:
+            result = self.reload_editor_file(force=False) # Try to save file
+            if result == RESULT_CANCEL:
+                self.update_view()
+                return
+
             self.left_panel.layout().setCurrentIndex(0)
             self.view_change_action.setText('Change view to text editor')
         
