@@ -2,7 +2,7 @@ from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QWidget, QLabel, QPushButton
+from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton
 from highlighter import Highlighter
 from utility import hex_to_rgb, rgb_to_hex
 
@@ -138,3 +138,33 @@ class ColorSlider(QSlider):
         self.setMinimum(0)
         self.setMaximum(255)
         self.setSingleStep(1)
+
+class ButtonBox(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedHeight(50)
+        layout = QHBoxLayout()
+
+        font = QFont('', pointSize=16)
+        self.bold_button = QPushButton(text='B', font=font)
+        self.bold_button.setCheckable(True)
+
+        font = QFont('', pointSize=16, italic=True)
+        self.italic_button = QPushButton(text='I', font=font)
+        self.italic_button.setCheckable(True)
+
+        font = QFont('', pointSize=16)
+        font.setUnderline(True)
+        self.underline_button = QPushButton(text='U', font=font)
+        self.underline_button.setCheckable(True)
+
+        font = QFont('', pointSize=16)
+        font.setStrikeOut(True)
+        self.strikeout_button = QPushButton(text='ab', font=font)
+        self.strikeout_button.setCheckable(True)
+
+        layout.addWidget(self.bold_button)
+        layout.addWidget(self.italic_button)
+        layout.addWidget(self.underline_button)
+        layout.addWidget(self.strikeout_button)
+        self.setLayout(layout)
