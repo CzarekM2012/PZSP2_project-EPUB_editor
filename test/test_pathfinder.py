@@ -63,7 +63,7 @@ class TestPathfinder(unittest.TestCase):
 
         self.assertEqual(opf_file_internal_path,
                          path.normcase(path.normpath(
-                             self.test_pathfinder._opf_files[0])))
+                             self.test_pathfinder.renditions[0]['opf_file'])))
 
     def test__load_container_multiple_rootfiles_single_content_opf(self)\
             -> None:
@@ -77,10 +77,14 @@ class TestPathfinder(unittest.TestCase):
         self.test_pathfinder.set_book_dir(test_dir)
         self.test_pathfinder._load_container()
 
+        opf_files_internal_paths =\
+            [rendition['opf_file'] for rendition in
+             self.test_pathfinder.renditions]
         self.assertListEqual(expected_opf_files_internal_paths,
-                             self.test_pathfinder._opf_files)
+                             opf_files_internal_paths)
         with self.assertRaises(FileNotFoundError):
-            self.test_pathfinder._read(self.test_pathfinder._opf_files[1])
+            self.test_pathfinder._read(
+                self.test_pathfinder.renditions[1]['opf_file'])
 
     def test__load_container_multiple_rootfiles_multiple_contents_opf(self)\
             -> None:
@@ -93,9 +97,13 @@ class TestPathfinder(unittest.TestCase):
         self.test_pathfinder.set_book_dir(test_dir)
         self.test_pathfinder._load_container()
 
+        opf_files_internal_paths =\
+            [rendition['opf_file'] for rendition in
+             self.test_pathfinder.renditions]
         self.assertListEqual(expected_opf_files_internal_paths,
-                             self.test_pathfinder._opf_files)
-        self.test_pathfinder._read(self.test_pathfinder._opf_files[1])
+                             opf_files_internal_paths)
+        self.test_pathfinder._read(
+                self.test_pathfinder.renditions[1]['opf_file'])
 
     def test__load_opf_file_opf_file_missing(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir,
@@ -106,7 +114,7 @@ class TestPathfinder(unittest.TestCase):
 
         with self.assertRaises(FileNotFoundError):
             self.test_pathfinder._load_opf_file(
-                self.test_pathfinder._opf_files[0])
+                self.test_pathfinder.renditions[0]['opf_file'])
 
     def test__load_manifest(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir, 'single_rootfile')
@@ -123,7 +131,8 @@ class TestPathfinder(unittest.TestCase):
         self.test_pathfinder.set_book_dir(test_dir)
         self.test_pathfinder._load_container()
         structure = self.test_pathfinder._parse_xml(
-            self.test_pathfinder._read(self.test_pathfinder._opf_files[0]))
+            self.test_pathfinder._read(
+                self.test_pathfinder.renditions[0]['opf_file']))
         items, stylesheets = self.test_pathfinder._load_manifest(structure)
 
         self.assertDictEqual(expected_items, items)
@@ -136,7 +145,8 @@ class TestPathfinder(unittest.TestCase):
         self.test_pathfinder.set_book_dir(test_dir)
         self.test_pathfinder._load_container()
         structure = self.test_pathfinder._parse_xml(
-            self.test_pathfinder._read(self.test_pathfinder._opf_files[0]))
+            self.test_pathfinder._read(
+                self.test_pathfinder.renditions[0]['opf_file']))
         items, _ = self.test_pathfinder._load_manifest(structure)
         spine = self.test_pathfinder._load_spine(structure, items)
 
@@ -150,6 +160,11 @@ class TestPathfinder(unittest.TestCase):
         self.test_pathfinder.set_book_dir(test_dir)
         self.test_pathfinder.search()
 
-        self.assertListEqual(expected_spines, self.test_pathfinder.spine)
-        self.assertListEqual(expected_stylesheets,
-                             self.test_pathfinder.stylesheets)
+        spines = []
+        stylesheets = []
+        for i in range(len(self.test_pathfinder.renditions)):
+            spines.append(self.test_pathfinder.renditions[i]['spine'])
+            stylesheets.append(
+                self.test_pathfinder.renditions[i]['stylesheets'])
+        self.assertListEqual(expected_spines, spines)
+        self.assertListEqual(expected_stylesheets, stylesheets)

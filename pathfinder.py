@@ -32,21 +32,16 @@ class Pathfinder:
     the unpacked .epub file
     '''
     def __init__(self, book_dir: str = None) -> None:
-        # Defined here to avoid errors when no file is loaded
-        self.spine = list[list[str]]()
-        self.stylesheets = list[list[str]]()
-        self._opf_files = list[str]()
-        #self._items = list[dict[str, str]]()
+        #  str -> str | list[str]
+        # 'opf_file': str, 'spine': list[str], 'stylesheets': list[str]
+        self.renditions = list[dict]()
         self.set_book_dir(book_dir=book_dir)
 
     def set_book_dir(self, book_dir: str = None) -> None:
         self.book_dir = book_dir
 
     def search(self) -> None:
-        self.spine.clear()
-        self.stylesheets.clear()
-        self._opf_files.clear()
-        #self._items.clear()
+        self.renditions.clear()
         self._load_container()
         self._load_views()
 
@@ -59,10 +54,11 @@ class Pathfinder:
         return tree
 
     def _load_views(self) -> None:
-        for i in range(len(self._opf_files)):
-            spine, stylesheets = self._load_opf_file(self._opf_files[i])
-            self.spine.append(spine)
-            self.stylesheets.append(stylesheets)
+        for i in range(len(self.renditions)):
+            spine, stylesheets =\
+                self._load_opf_file(self.renditions[i]['opf_file'])
+            self.renditions[i]['spine'] = spine
+            self.renditions[i]['stylesheets'] = stylesheets
 
     def _load_container(self) -> None:
         try:
@@ -82,11 +78,14 @@ contains no referrence to file describing structure of the book view, \
 and therefore book cannot be read')
         for root_file in views:
             if root_file.get('media-type') == 'application/oebps-package+xml':
-                self._opf_files.append(root_file.get('full-path'))
-        if len(self._opf_files) == 0:
-            raise MissingValueError('None of book view descriptions contains\
-is marked with proper media-type and therefore, file is non-compliant with\
-the standard')
+                self.renditions.append(
+                    {'opf_file': root_file.get('full-path'),
+                     'spine': list[str](),
+                     'stylesheets': list[str]()})
+        if len(self.renditions) == 0:
+            raise MissingValueError('None of book rendition references \
+in \"META-INF/container.xml\" is marked with proper media-type and therefore, \
+file is non-compliant with the standard')
 
     def _read(self, name: str) -> str:
         with open(path.join(self.book_dir, name), "r") as file:
