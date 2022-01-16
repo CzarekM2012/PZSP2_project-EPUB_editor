@@ -15,6 +15,8 @@ class FileManager:
     def __init__(self):
         self.load_path = None
         self.css_files = []
+        self.css_file_paths = []
+        self.page_files_paths = []
         self.edition_dir = path.join(path.dirname(__file__), 'edit')
         self.pathfinder = Pathfinder(self.edition_dir)
         self.prepare_edition_dir()
@@ -31,8 +33,8 @@ class FileManager:
                 except OSError as e:
                     # Probably only open file or lack of permissions
                     print('Failed to delete %s. Reason: %s' % (file_path, e))
-        else:
-            mkdir(self.edition_dir)
+            return
+        mkdir(self.edition_dir)
 
     def load_book(self, file_path):
         """
@@ -50,13 +52,11 @@ class FileManager:
             print(f"Could not open file due to {e}")
             self.load_path = None
             self.css_files = []
-            self.pathfinder = Pathfinder(self.edition_dir)
             return 1
         except zipfile.BadZipFile as e:
             print(f"Could not open file due to {e}")
             self.load_path = None
             self.css_files = []
-            self.pathfinder = Pathfinder(self.edition_dir)
             return 2
 
         try:
@@ -65,11 +65,11 @@ class FileManager:
             print(f"Could not open file due to {e}")
             self.load_path = None
             self.css_files = []
-            self.pathfinder = Pathfinder(self.edition_dir)
             return 2
 
-        self.css_file_paths = self.pathfinder.get_css_path_list()
-        
+        self.page_files_paths, self.css_file_paths =\
+            self.pathfinder.get_rendition_paths()
+
         self.load_css_files()
 
         print('File loaded')
@@ -95,7 +95,7 @@ class FileManager:
         style = self.get_css_style_by_name(style_name)
         if style == None:
             return ""
-        
+
         return style.getPropertyValue(param_name)
 
 
@@ -132,14 +132,14 @@ class FileManager:
                     return item.style 
         return None
 
-    
+
     # Returns a list of string tuples: (name, value), one for each parameter
     def get_css_params_by_style_name(self, name):
         param_list = []
         style = self.get_css_style_by_name(name)
         if style == None:
             return param_list
-        
+
         for property in style.getProperties():
             param_list.append((property.name, property.value))
         return param_list
@@ -157,7 +157,7 @@ class FileManager:
 
     def get_css_text(self, file_index):
         return str(self.css_files[file_index].cssText, 'utf-8')
-    
+
 
     def overwrite_css_file_with_text(self, file_path, text):
 
@@ -175,7 +175,7 @@ class FileManager:
         #file = self.get_stylesheet_file_by_path(file_path)
         #if file == None:
         #    return
-        
+
         #print(text)
         #file.setCSSText(bytes(text, 'utf-8')) #TODO: Check encoding, probably need binary
 
@@ -191,7 +191,7 @@ class FileManager:
         if stylesheet == None:
             return ""
         return str(stylesheet.cssText, 'utf-8')
-        
+
 
     def get_css_file_count(self):
         return len(self.css_files)
@@ -217,10 +217,10 @@ class FileManager:
         except PermissionError as e:
             print(f"Could not save file due to {e}")
             return
-        
+
         print('File saved')
 
-    
+
     def get_page(self, page_nr):
 
         # Because later checks still return index 0, if there are 0 pages
@@ -234,11 +234,11 @@ class FileManager:
             page_nr = 0
 
         page_file_path = path.join(self.edition_dir,
-                                   self.pathfinder.spine[page_nr])
-        
+                                   self.page_files_paths[page_nr])
+
         # Also return page nr, because it can change
         return page_nr, QUrl.fromLocalFile(page_file_path)
-    
-    
+
+
     def get_page_count(self):
-        return self.pathfinder.get_html_doc_count()
+        return len(self.page_files_paths)

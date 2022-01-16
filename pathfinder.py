@@ -107,15 +107,21 @@ file is non-compliant with the standard')
         #self._load_guide()
 
         return spine, stylesheets
-        
-    def get_absolute_paths(self, relative_path_list):
-        absolute_path_list = []
-        for relative_path in relative_path_list:
-            absolute_path_list.append(path.join(self.book_dir, path.normpath(relative_path)))
-        return absolute_path_list
 
-    def get_css_path_list(self):
-        return self.get_absolute_paths(self.stylesheets)
+    def get_rendition_paths(self, index: int = 0)\
+            -> tuple[list[str], list[str]]:
+        index = min(index, len(self.renditions) - 1)
+        rendition = self.renditions[index]
+        opf_file_dirname = path.dirname(rendition['opf_file'])
+        stylesheets_paths =\
+            [paths_join_normalize(
+                self.book_dir, opf_file_dirname, stylesheet)
+             for stylesheet in rendition['stylesheets']]
+        spine_files_paths =\
+            [paths_join_normalize(
+                self.book_dir, opf_file_dirname, spine_file)
+             for spine_file in rendition['spine']]
+        return spine_files_paths, stylesheets_paths
 
 #    '''def _load_metadata(self):
 #        container_root = self.container.getroot()
