@@ -94,7 +94,7 @@ class FileManager:
     def get_css_param(self, style_name, param_name):
         style = self.get_css_style_by_name(style_name)
         if style == None:
-            return
+            return ""
         
         return style.getPropertyValue(param_name)
 
