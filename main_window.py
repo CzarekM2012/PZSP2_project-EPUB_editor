@@ -146,13 +146,13 @@ class MainWindow(QMainWindow):
 
         self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size)
         self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
-        self.misc_css_property_editor = MiscCSSPropertyEditor(label_style, 'Other properties')
+        self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop, self.remove_misc_css_prop, self.set_misc_value_on_prop_change)
         self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
         control_panel_layout.addWidget(self.basic_font_editor)
         control_panel_layout.addWidget(self.color_box)
-        control_panel_layout.addWidget(self.misc_css_property_editor)
+        control_panel_layout.addWidget(self.misc_prop_editor)
 
         self.control_panel.setLayout(control_panel_layout)
 
@@ -506,5 +506,40 @@ class MainWindow(QMainWindow):
 
         self.file_manager.set_css_param(style_name, 'font-size', value + unit)
         self.update_view()
+    
+    def set_misc_css_prop(self):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
 
+        property = self.misc_prop_editor.get_prop_name()
+        value = self.misc_prop_editor.get_value()
+        
+        self.file_manager.set_css_param(style_name, property, value)
+        self.update_view()
+
+    def remove_misc_css_prop(self):
+        self.misc_prop_editor.set_value("")
+        
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        property = self.misc_prop_editor.get_prop_name()
+        
+        self.file_manager.remove_css_param(style_name, property)
+        self.update_view()
+    
+    def set_misc_value_on_prop_change(self):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            self.misc_prop_editor.set_value("")
+            return
+        
+        value = self.file_manager.get_css_param(style_name, self.misc_prop_editor.property_list.currentText())
+        if value == None:
+            value = ""
+        
+        self.misc_prop_editor.set_value(value)    
+    
 
