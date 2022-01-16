@@ -129,6 +129,9 @@ class BasicFontEditor(ControlPanelElement):
     def set_font_size_unit(self, value):
         self.font_size_picker.set_font_size_unit(value)
 
+    def is_supported_unit(self, value):
+        return self.font_size_picker.is_supported_unit(value)
+
 class ButtonBox(QWidget):
     def __init__(self):
         super().__init__()
@@ -164,7 +167,7 @@ class ButtonBox(QWidget):
 
 class FontSizePicker(QWidget):
 
-    UNITS = ['mm', 'px', 'pt', 'em', 'ex', 'vw', 'vh', '%']
+    UNITS = ['mm', 'px', 'pt', 'em', 'ex', 'vw', 'vh', '%', '--']
 
     def __init__(self, action):
         super().__init__()
@@ -182,7 +185,7 @@ class FontSizePicker(QWidget):
         self.size_field.editingFinished.connect(action)
         self.unit_picker = QComboBox()
         self.unit_picker.addItems(self.UNITS)
-        self.unit_picker.currentIndexChanged.connect(action)
+        self.unit_picker.textActivated.connect(action)
 
         layout.addWidget(self.decrease_button)
         layout.addWidget(self.increase_button)
@@ -213,6 +216,9 @@ class FontSizePicker(QWidget):
 
     def set_font_size_unit(self, value):
         self.unit_picker.setCurrentText(value)
+
+    def is_supported_unit(self, value):
+        return value in self.UNITS
 
 
 class MiscCSSPropertyEditor(ControlPanelElement):

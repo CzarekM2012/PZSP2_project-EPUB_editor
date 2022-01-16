@@ -254,13 +254,15 @@ class MainWindow(QMainWindow):
         self.combo_box_font.addItem("[None]")
         self.combo_box_font.addItems(self.get_font_names())
 
-        
         font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
-        font_size_str = re.match(r"([0-9.]*)([a-zA-Z%]*)", font_size_str)
-        current_font_size = font_size_str.group(1)
-        self.basic_font_editor.set_font_size(current_font_size)
-        current_font_size_unit = font_size_str.group(2)
+        current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
+
+        print(current_font_size, current_font_size_unit, self.get_current_style_name())
+        
+        if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
+            current_font_size_unit = '--'
         self.basic_font_editor.set_font_size_unit(current_font_size_unit)
+        self.basic_font_editor.set_font_size(current_font_size)
 
         for font_name, fallback_font in font_list:
             if font_name in current_font:
@@ -269,6 +271,14 @@ class MainWindow(QMainWindow):
                     self.combo_box_font.setCurrentIndex(index)
 
         self.update_view()
+
+    
+    def parse_font_size_str(self, string):
+        font_size_str = re.match(r"([0-9.]*)([a-zA-Z%]*)", string)
+        font_size = font_size_str.group(1)
+        font_size_unit = font_size_str.group(2)
+        return font_size, font_size_unit
+
     
 
     def check_add_font(self, font_desc):
@@ -431,6 +441,9 @@ class MainWindow(QMainWindow):
 
         value = self.basic_font_editor.get_font_size()
         unit = self.basic_font_editor.get_font_size_unit()
+        if unit == '--':
+            font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
+            _, unit = self.parse_font_size_str(font_size_str)
 
         self.file_manager.set_css_param(style_name, 'font-size', value + unit)
         self.update_view()
