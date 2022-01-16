@@ -9,14 +9,14 @@ header {
     text-align: center
     }
 h1 {
-    font-family: Arial;
-    font-size: 30px;
-    text-align: center
+    font-size: 3mm;
+    text-align: center;
+    font-family: "Arial", sans-serif
     }
 h2 {
-    font-family: "Courier New", Courier, monospace;
     font-size: 24px;
-    text-align: center
+    text-align: center;
+    font-family: "Courier New", monospace
     }
 p {
     color: #000;

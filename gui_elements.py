@@ -104,18 +104,31 @@ class ControlPanelComboBox(ControlPanelElement):
 
 
 class BasicFontEditor(ControlPanelElement):
-    def __init__(self, label_style, label_text, combo_box_action):
+    def __init__(self, label_style, label_text, combo_box_action, font_size_picker_action):
         super().__init__(label_style, label_text)
         self.setFixedHeight(160)
 
         self.combo_box = QComboBox()
         self.combo_box.currentTextChanged.connect(combo_box_action)
-        self.font_size_picker = FontSizePicker()
+        self.font_size_picker = FontSizePicker(font_size_picker_action)
         self.button_box = ButtonBox()
 
         self.main_layout.addWidget(self.combo_box)
         self.main_layout.addWidget(self.font_size_picker)
         self.main_layout.addWidget(self.button_box)
+
+    def get_font_size(self):
+        return self.font_size_picker.get_font_size()
+
+    def get_font_size_unit(self):
+        return self.font_size_picker.get_font_size_unit()
+
+    def set_font_size(self, value):
+        self.font_size_picker.set_font_size(value)
+
+    def set_font_size_unit(self, value):
+        self.font_size_picker.set_font_size_unit(value)
+
 class ButtonBox(QWidget):
     def __init__(self):
         super().__init__()
@@ -150,23 +163,56 @@ class ButtonBox(QWidget):
 
 
 class FontSizePicker(QWidget):
-    def __init__(self):
+
+    UNITS = ['mm', 'px', 'pt', 'em', 'ex', 'vw', 'vh', '%']
+
+    def __init__(self, action):
         super().__init__()
+        self.action = action
         self.setFixedHeight(50)
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
 
         self.decrease_button = QPushButton('-')
+        self.decrease_button.released.connect(self._decrease_font_size)
         self.increase_button = QPushButton('+')
+        self.increase_button.released.connect(self._increase_font_size)
         self.size_field = QLineEdit()
         self.size_field.setValidator(QDoubleValidator(0, 500, 3))
+        self.size_field.editingFinished.connect(action)
         self.unit_picker = QComboBox()
+        self.unit_picker.addItems(self.UNITS)
+        self.unit_picker.currentIndexChanged.connect(action)
 
         layout.addWidget(self.decrease_button)
         layout.addWidget(self.increase_button)
         layout.addWidget(self.size_field)
         layout.addWidget(self.unit_picker)
         self.setLayout(layout)
+
+    def _increase_font_size(self):
+        value = float(self.get_font_size())
+        value += 1
+        self.size_field.setText(str(value))
+        self.action()
+
+    def _decrease_font_size(self):
+        value = float(self.get_font_size())
+        value = max(value - 1, 0)
+        self.size_field.setText(str(value))
+        self.action()
+
+    def get_font_size(self):
+        return self.size_field.text()
+
+    def get_font_size_unit(self):
+        return self.unit_picker.currentText()
+
+    def set_font_size(self, value):
+        self.size_field.setText(value)
+
+    def set_font_size_unit(self, value):
+        self.unit_picker.setCurrentText(value)
 
 
 class MiscCSSPropertyEditor(ControlPanelElement):

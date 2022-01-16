@@ -1,3 +1,6 @@
+from PySide6.QtWidgets import QMessageBox
+
+
 font_list = [
     ("Arial", "sans-serif"),
     ("Verdana", "sans-serif"),
@@ -37,3 +40,10 @@ def hex_to_rgb(hex_string):
     else :                                  # Not a valid hex string
         return None
     return (r, g, b)
+
+
+def file_open_error():
+    error = QMessageBox()
+    error.setText("ERROR - could not open file. Not a valid EPUB.")
+    error.setWindowTitle("Error")
+    error.exec()

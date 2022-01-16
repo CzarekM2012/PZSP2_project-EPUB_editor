@@ -9,6 +9,7 @@ from gui_elements import *
 from file_manager import FileManager
 from utility import *
 
+import re
 import time
 import threading
 
@@ -132,7 +133,8 @@ class MainWindow(QMainWindow):
 
         self.combo_box_style = ControlPanelComboBox(label_style, 'CSS style', self.change_edit_style)
 
-        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font)
+        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size)
+        self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
         self.misc_css_property_editor = MiscCSSPropertyEditor(label_style, 'Other properties')
         self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.remove_color)
 
@@ -251,6 +253,14 @@ class MainWindow(QMainWindow):
         self.combo_box_font.clear()
         self.combo_box_font.addItem("[None]")
         self.combo_box_font.addItems(self.get_font_names())
+
+        
+        font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
+        font_size_str = re.match(r"([0-9.]*)([a-zA-Z%]*)", font_size_str)
+        current_font_size = font_size_str.group(1)
+        self.basic_font_editor.set_font_size(current_font_size)
+        current_font_size_unit = font_size_str.group(2)
+        self.basic_font_editor.set_font_size_unit(current_font_size_unit)
 
         for font_name, fallback_font in font_list:
             if font_name in current_font:
@@ -392,14 +402,6 @@ class MainWindow(QMainWindow):
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
         self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
-
-    def file_open_error(self):
-        error = QMessageBox()
-        error.setText("ERROR - could not open file. Not a valid EPUB.")
-        error.setWindowTitle("Error")
-        error.exec()
-
-
     def file_save(self):
 
         if not self.file_manager.is_file_loaded():
@@ -420,6 +422,17 @@ class MainWindow(QMainWindow):
             self.left_panel.layout().setCurrentIndex(0)
             self.view_change_action.setText('Change view to text editor')
         
+        self.update_view()
+
+    def set_font_size(self):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        value = self.basic_font_editor.get_font_size()
+        unit = self.basic_font_editor.get_font_size_unit()
+
+        self.file_manager.set_css_param(style_name, 'font-size', value + unit)
         self.update_view()
 
 
