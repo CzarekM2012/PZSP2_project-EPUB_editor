@@ -13,76 +13,102 @@ NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
 IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
 
 
+def paths_join_normalize(base: str, *joins: str) -> str:
+    '''
+    path.normcase(path.normpath(path.join(path, paths)))
+    '''
+    for addition in joins:
+        base = path.join(base, addition)
+    return path.normcase(path.normpath(base))
+
+
+class MissingValueError(ValueError):
+    pass
+
+
 class Pathfinder:
     '''
     Object finding paths to stylesheets and files in the spine of
     the unpacked .epub file
     '''
-    def __init__(self, book_dir=None) -> None:
+    def __init__(self, book_dir: str = None) -> None:
         # Defined here to avoid errors when no file is loaded
-        self.spine = []
-        self.stylesheets = []
-        self._items = {}
+        self.spine = list[list[str]]()
+        self.stylesheets = list[list[str]]()
+        self._opf_files = list[str]()
+        #self._items = list[dict[str, str]]()
         self.set_book_dir(book_dir=book_dir)
 
-    def set_book_dir(self, book_dir=None) -> None:
+    def set_book_dir(self, book_dir: str = None) -> None:
         self.book_dir = book_dir
 
     def search(self) -> None:
-        self.spine = []
-        self.stylesheets = []
-        self._items = {}
+        self.spine.clear()
+        self.stylesheets.clear()
+        self._opf_files.clear()
+        #self._items.clear()
         self._load_container()
-        self._load_opf_file()
-        for i in range(len(self.spine)):
-            self.spine[i] =\
-                path.normpath(path.join(self._opf_dir, self.spine[i]))
-        for i in range(len(self.stylesheets)):
-            self.stylesheets[i] =\
-                path.normpath(path.join(self._opf_dir, self.stylesheets[i]))
+        self._load_views()
 
-    def _parse_string(self, str) -> None:
+    def _parse_xml(self, xml: str) -> None:
         try:
-            tree = etree.parse(io.BytesIO(str.encode('utf-8')))
+            tree = etree.parse(io.BytesIO(xml.encode('utf-8')))
         except etree.Error:
-            tree = etree.parse(io.BytesIO(str))
+            tree = etree.parse(io.BytesIO(xml))
 
         return tree
+
+    def _load_views(self) -> None:
+        for i in range(len(self._opf_files)):
+            spine, stylesheets = self._load_opf_file(self._opf_files[i])
+            self.spine.append(spine)
+            self.stylesheets.append(stylesheets)
 
     def _load_container(self) -> None:
         try:
             meta_inf = self._read('META-INF/container.xml')
         except FileNotFoundError as e:
-            raise FileNotFoundError('This ".epub" file does not conform to the\
+            raise FileNotFoundError('This ".epub" file does not \
+contain the \"META-INF/container.xml\", which is required by the \
 standard and therefore cannot be read') from e
-        tree = self._parse_string(meta_inf)
 
-        for root_file in \
-            tree.findall('//xmlns:rootfile[@media-type]',
-                         namespaces={'xmlns': NAMESPACES['CONTAINERS']}):
+        tree = self._parse_xml(meta_inf)
+
+        views = tree.findall('//xmlns:rootfile[@media-type]',
+                             namespaces={'xmlns': NAMESPACES['CONTAINERS']})
+        if len(views) == 0:
+            raise MissingValueError('\"META-INF/container.xml\" in this epub \
+contains no referrence to file describing structure of the book view, \
+and therefore book cannot be read')
+        for root_file in views:
             if root_file.get('media-type') == 'application/oebps-package+xml':
-                self._opf_file = root_file.get('full-path')
-                self._opf_dir = path.dirname(self._opf_file)
+                self._opf_files.append(root_file.get('full-path'))
+        if len(self._opf_files) == 0:
+            raise MissingValueError('None of book view descriptions contains\
+is marked with proper media-type and therefore, file is non-compliant with\
+the standard')
 
-    def _read(self, name) -> str:
-        file = open(path.join(self.book_dir, name), "r")
-        content = file.read()
-        file.close()
+    def _read(self, name: str) -> str:
+        with open(path.join(self.book_dir, name), "r") as file:
+            content = file.read()
         return content
 
-    def _load_opf_file(self):
+    def _load_opf_file(self, opf_file_internal_path: str)\
+            -> tuple[list[str], list[str]]:
         try:
-            content = self._read(self._opf_file)
-        except KeyError:
+            content = self._read(opf_file_internal_path)
+        except FileNotFoundError:
             raise FileNotFoundError(-1, 'Can not find container file')
 
-        self.container = self._parse_string(content)
+        container = self._parse_xml(content)
 
         #self._load_metadata()
-        self._load_manifest()
-        self._load_spine()
+        id_to_href, stylesheets = self._load_manifest(container)
+        spine = self._load_spine(container, id_to_href)
         #self._load_guide()
 
+        return spine, stylesheets
+        
     def get_absolute_paths(self, relative_path_list):
         absolute_path_list = []
         for relative_path in relative_path_list:
@@ -168,15 +194,23 @@ standard and therefore cannot be read') from e
             if others.get('id') == self.book.IDENTIFIER_ID:
                 self.book.uid = value'''
 
-    def _load_manifest(self):
-        for r in self.container.find('{%s}%s' % (NAMESPACES['OPF'],
-                                     'manifest')):
-            if r is not None and r.tag != '{%s}item' % NAMESPACES['OPF']:
+    def _load_manifest(self, container) -> tuple[dict[str, str], list[str]]:
+        items = dict[str, str]()
+        stylesheets = list[str]()
+        assignments = {
+            'text/css': lambda href: stylesheets.append(href),
+        }
+        for entry in container.find(f'{{{NAMESPACES["OPF"]}}}manifest'):
+            if entry is not None and\
+               entry.tag != f'{{{NAMESPACES["OPF"]}}}item':
                 continue
-            href = r.get('href')
-            self._items[r.get('id')] = href
-            if r.get('media-type') == 'text/css':
-                self.stylesheets.append(href)
+            href = entry.get('href')
+            items[entry.get('id')] = href
+            try:
+                assignments[entry.get('media-type')](href)
+            except KeyError:
+                pass
+        return items, stylesheets
 
             '''media_type = r.get('media-type')
             _properties = r.get('properties', '')
@@ -345,8 +379,8 @@ standard and therefore cannot be read') from e
                 if filename in htmlfiles:
                     htmlfiles[filename].pages.append(page)'''
 
-    def _load_spine(self):
-        spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
+    def _load_spine(self, container, id_to_href: dict[str, str]) -> list[str]:
+        spine = container.find(f'{{{NAMESPACES["OPF"]}}}spine')
 
         '''
         From: https://www.w3.org/publishing/epub3/epub-packages.html#attrdef-itemref-linear
@@ -358,8 +392,17 @@ standard and therefore cannot be read') from e
         Examples of auxiliary content include: notes, descriptions and
         answer keys.
         '''
-        spine = [(t.get('idref'), t.get('linear', 'yes')) for t in spine]
-        self.spine = [self._items[t[0]] for t in spine]
+        content = [[], []]  # value of linear 'yes' and 'no'
+        for entry in spine:
+            id_ref = entry.get('idref')
+            index = 0
+            if entry.get('linear', 'yes') != 'yes':
+                index = 1
+            content[index].append(id_ref)
+        for i in range(len(content)):
+            for j in range(len(content[i])):
+                content[i][j] = id_to_href[content[i][j]]
+        return content[0] + content[1]
 
         '''toc = spine.get('toc', '')
         direction = spine.get('page-progression-direction', None)'''
