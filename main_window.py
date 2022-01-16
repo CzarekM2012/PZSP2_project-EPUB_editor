@@ -1,55 +1,22 @@
 from os import path
 from PySide6.QtGui import QAction, QFont, QKeySequence
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
+from PySide6.QtWidgets import QFrame, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
 # from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 
 from gui_elements import *
 from file_manager import FileManager
+from utility import *
+
+import re
 
 RESULT_SUCCESS = 0 # Return value
 RESULT_CANCEL = 2
 
+
 HIGHLIGHT_COLOR_STRING = "#ffffab"
 
-font_list = [
-    ("Arial", "sans-serif"),
-    ("Verdana", "sans-serif"),
-    ("Helvetica", "sans-serif"),
-    ("Tahoma", "sans-serif"),
-    ("Trebuchet MS", "sans-serif"),
-    ("Times New Roman", "serif"),
-    ("Georgia", "serif"),
-    ("Garamond", "serif"),
-    ("Courier New", "monospace"),
-    ("Brush Script MT", "cursive"),
-]
-
-def rgb_to_hex(r, g, b):
-    """
-    Takes values from range 0-255 and returns a hex string in format "RRGGBB"
-    """
-    return '#%02x%02x%02x' % (r, g, b)
-
-def hex_to_rgb(hex_string):
-    """
-    String has to be formatted this way: "RRGGBB" or "RGB" (shorthand version)
-    Returns a tuple of integers like (R, G, B), where each value is in range 0-255
-    """
-    #print(f'String to parse: "{hex_string}"')
-
-    if len(hex_string) == 6:                # Classic hex string
-        r = int("0x" + hex_string[:2], 0)
-        g = int("0x" + hex_string[2:4], 0)
-        b = int("0x" + hex_string[4:], 0)
-    elif len(hex_string) == 3:              # Shorthand hex string
-        r = int("0x" + hex_string[0] + hex_string[0], 0)
-        g = int("0x" + hex_string[1] + hex_string[1], 0)
-        b = int("0x" + hex_string[2] + hex_string[2], 0)
-    else :                                  # Not a valid hex string
-        return None
-    return (r, g, b)
 
 class MainWindow(QMainWindow):
 
@@ -70,6 +37,19 @@ class MainWindow(QMainWindow):
             return
         
         super(MainWindow, self).closeEvent(evnt)
+
+    def set_defaults(self):
+        self.setWindowTitle("EPUB CSS Editor")
+        # self.setFixedHeight(720)
+        # self.setFixedWidth(1280)
+        self.resize(self.screen_size * 0.7)
+
+
+    def init_variables(self):
+        self.current_page_nr = 0
+        self.edited_css_path = None
+        self.file_manager = FileManager()
+
 
     def reload_interface(self):
         self.setup_menubar()
@@ -158,47 +138,21 @@ class MainWindow(QMainWindow):
 
 
     def setup_control_panel(self):
+        label_style = "QLabel { color : #448aff; font-size: 9pt; }"
         self.control_panel = QWidget()
         control_panel_layout = QVBoxLayout()
 
-        self.combo_box_style = QComboBox()
-        self.combo_box_style.currentTextChanged.connect(self.change_edit_style)
+        self.combo_box_style = ControlPanelComboBox(label_style, 'CSS style', self.change_edit_style)
 
-        self.combo_box_font = QComboBox()
-        self.combo_box_font.currentTextChanged.connect(self.change_font)
-        
-        self.color_box = QWidget()
-        color_box_layout = QVBoxLayout()
-        self.color_label = QLabel(text="No color specified")
-        self.color_label.setFont(QFont('Arial', 20))
-        self.slider_color_r = QSlider(orientation=Qt.Orientation.Horizontal)
-        self.slider_color_g = QSlider(orientation=Qt.Orientation.Horizontal)
-        self.slider_color_b = QSlider(orientation=Qt.Orientation.Horizontal)
-        self.slider_color_r.setMinimum(0)
-        self.slider_color_r.setMaximum(255)
-        self.slider_color_r.setSingleStep(1)
-        self.slider_color_g.setMinimum(0)
-        self.slider_color_g.setMaximum(255)
-        self.slider_color_g.setSingleStep(1)
-        self.slider_color_b.setMinimum(0)
-        self.slider_color_b.setMaximum(255)
-        self.slider_color_b.setSingleStep(1)
-        self.slider_color_r.valueChanged.connect(self.change_color_slider)
-        self.slider_color_g.valueChanged.connect(self.change_color_slider)
-        self.slider_color_b.valueChanged.connect(self.change_color_slider)
-        self.color_remove_button = QPushButton(text="Remove color")
-        self.color_remove_button.clicked.connect(self.remove_color)
-        color_box_layout.addWidget(self.color_label)
-        color_box_layout.addWidget(self.slider_color_r)
-        color_box_layout.addWidget(self.slider_color_g)
-        color_box_layout.addWidget(self.slider_color_b)
-        color_box_layout.addWidget(self.color_remove_button)
-        self.color_box.setLayout(color_box_layout)
-        self.color_box.setFixedHeight(170)
+        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size)
+        self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
+        self.misc_css_property_editor = MiscCSSPropertyEditor(label_style, 'Other properties')
+        self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
-        control_panel_layout.addWidget(self.combo_box_font)
+        control_panel_layout.addWidget(self.basic_font_editor)
         control_panel_layout.addWidget(self.color_box)
+        control_panel_layout.addWidget(self.misc_css_property_editor)
 
         self.control_panel.setLayout(control_panel_layout)
 
@@ -234,19 +188,6 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(main_layout)
         self.setCentralWidget(self.central_widget)
 
-
-    def set_defaults(self):
-        self.setWindowTitle("Edytor EPUB")
-        # self.setFixedHeight(720)
-        # self.setFixedWidth(1280)
-        self.resize(self.screen_size * 0.7)
-
-
-    def init_variables(self):
-        self.current_page_nr = 0
-        self.edited_css_path = None
-        self.file_manager = FileManager()
-
     def reload_editor_file(self, force=False):
         return self.editor_set_file(self.editor_combo_box_file.currentText(), force)
 
@@ -277,59 +218,16 @@ class MainWindow(QMainWindow):
         self.update_view()
 
     def change_color_slider(self):
-        self.change_color_rgb(self.slider_color_r.value(),
-                              self.slider_color_g.value(),
-                              self.slider_color_b.value())
+        self.change_color_rgb(*self.color_box.get_color_values())
 
     def remove_color(self):
         style_name = self.get_current_style_name()
         if style_name == "":
             return
 
-        self.reset_color_sliders()
+        self.color_box.reset_sliders()
         self.file_manager.remove_css_param(style_name, 'color')
         self.update_view()
-
-    def set_color_sliders_enabled(self, enable):
-        """
-        Enables or disables (and resets) color sliders when given True or False respectively
-        """
-        self.slider_color_r.setEnabled(enable)
-        self.slider_color_g.setEnabled(enable)
-        self.slider_color_b.setEnabled(enable)
-        
-        self.reset_color_sliders()
-
-    def block_color_slider_signals(self, block):
-        """
-        Prevents sliders from triggering their functions when values change
-        """
-        self.slider_color_r.blockSignals(block)
-        self.slider_color_g.blockSignals(block)
-        self.slider_color_b.blockSignals(block)
-
-    def reset_color_sliders(self):
-        self.set_color_sliders(0, 0, 0)
-        self.color_label.setText(f"No color specified")
-
-    def set_color_sliders(self, r, g, b):
-        """
-        Sets slider values without triggering updates to avoid unnecessary file writes and update loops
-        Also keeps color label up to date
-        """
-        self.block_color_slider_signals(True)
-        self.slider_color_r.setValue(r)
-        self.slider_color_g.setValue(g)
-        self.slider_color_b.setValue(b)
-        self.block_color_slider_signals(False)
-        
-        hex_string = rgb_to_hex(r, g, b)
-        self.color_label.setText(f"Color: RGB ({r}, {g}, {b}) = {hex_string}")
-
-
-    def set_color_sliders_hex(self, hex_string):
-        r, g, b = hex_to_rgb(hex_string[1:])
-        self.set_color_sliders(r, g, b)
 
     def change_color_rgb(self, r, g, b):
         """
@@ -342,13 +240,11 @@ class MainWindow(QMainWindow):
         
         #print(f"Setting color to: RGB({r}, {g}, {b})")
         hex_string = rgb_to_hex(r, g, b)
-        self.color_label.setText(f"Color: RGB ({r}, {g}, {b}) = {hex_string}")
+        self.color_box.set_color_label(f"Color: RGB ({r}, {g}, {b}) = {hex_string}")
         #print(f"Setting color to: {hex_string}")
 
-        
         self.file_manager.set_css_param(style_name, 'color', hex_string)
         self.update_view()
-        pass
 
     # Connected to combo_box_style
     def change_edit_style(self):
@@ -356,9 +252,9 @@ class MainWindow(QMainWindow):
         # Update color sliders
         color = self.file_manager.get_css_param(self.get_current_style_name(), 'color')
         if color == "":
-            self.reset_color_sliders()
+            self.color_box.reset_sliders()
         else:
-            self.set_color_sliders_hex(color)
+            self.color_box.set_sliders_hex(color)
         
         # Update font selectors, add new fonts to list if missing
         current_font = self.file_manager.get_css_param(self.get_current_style_name(), 'font-family')
@@ -368,6 +264,16 @@ class MainWindow(QMainWindow):
         self.combo_box_font.addItem("[None]")
         self.combo_box_font.addItems(self.get_font_names())
 
+        font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
+        current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
+
+        print(current_font_size, current_font_size_unit, self.get_current_style_name())
+        
+        if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
+            current_font_size_unit = '--'
+        self.basic_font_editor.set_font_size_unit(current_font_size_unit)
+        self.basic_font_editor.set_font_size(current_font_size)
+
         for font_name, fallback_font in font_list:
             if font_name in current_font:
                 index = self.combo_box_font.findText(font_name, Qt.MatchFixedString)
@@ -375,6 +281,14 @@ class MainWindow(QMainWindow):
                     self.combo_box_font.setCurrentIndex(index)
 
         self.update_view()
+
+    
+    def parse_font_size_str(self, string):
+        font_size_str = re.match(r"([0-9.]*)([a-zA-Z%]*)", string)
+        font_size = font_size_str.group(1)
+        font_size_unit = font_size_str.group(2)
+        return font_size, font_size_unit
+
     
 
     def check_add_font(self, font_desc):
@@ -552,7 +466,6 @@ class MainWindow(QMainWindow):
         prompt.setStandardButtons(button_flags)
         return prompt.exec()
 
-
     def file_save(self):
 
         if not self.file_manager.is_file_loaded():
@@ -578,6 +491,20 @@ class MainWindow(QMainWindow):
             self.left_panel.layout().setCurrentIndex(0)
             self.view_change_action.setText('Change view to text editor')
         
+        self.update_view()
+
+    def set_font_size(self):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        value = self.basic_font_editor.get_font_size()
+        unit = self.basic_font_editor.get_font_size_unit()
+        if unit == '--':
+            font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
+            _, unit = self.parse_font_size_str(font_size_str)
+
+        self.file_manager.set_css_param(style_name, 'font-size', value + unit)
         self.update_view()
 
 
