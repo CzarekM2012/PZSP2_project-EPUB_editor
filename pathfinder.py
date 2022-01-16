@@ -61,6 +61,16 @@ class Pathfinder:
              for spine_file in rendition['spine']]
         return spine_files_paths, stylesheets_paths
 
+    def get_opf_file_path(self, rendition_id: int = 0):
+        return self.renditions[rendition_id]['opf_file']
+    
+    def get_opf_folder_path(self, rendition_id: int = 0):
+        return path.dirname(self.get_opf_file_path(rendition_id))
+
+    # TODO: Replace with something sensible
+    def get_font_folder_path(self, rendition_id: int = 0):
+        return path.join(self.get_opf_folder_path(rendition_id), 'Fonts')
+
     def generate_manifest_id(self, base_name: str, rendition_id: int = 0):
         '''
         Generates a simple text with id based on given string
@@ -152,6 +162,8 @@ class Pathfinder:
                 if item_id == child_id:
                     matches.append(child)
             elif href == child_href:
+                matches.append(child)
+            elif item_id in child_id:
                 matches.append(child)
         if len(matches) != 1:
             return False, False

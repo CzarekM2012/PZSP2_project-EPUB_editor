@@ -1,11 +1,13 @@
-from os import path, listdir, mkdir, unlink, walk
+from os import path, listdir, mkdir, makedirs, unlink, walk, sep, remove
 from pathlib import Path
 import zipfile
 from zipfile import ZIP_DEFLATED, ZipFile
-from shutil import rmtree
+from shutil import rmtree, copyfile
 
 from cssutils.css.cssstylesheet import CSSStyleSheet
+from cssutils.css import CSSStyleDeclaration, CSSFontFaceRule
 from gui_elements import *
+from font import Font
 
 import cssutils
 
@@ -143,7 +145,13 @@ class FileManager:
                     return item.style 
         return None
 
-
+    def get_all_css_fonts(self):
+        font_list = []
+        for file in self.css_files:
+            for item in file.cssRules.rulesOfType(cssutils.css.CSSRule.FONT_FACE_RULE):
+                font_list.append(item.style)
+        return font_list
+    
     # Returns a list of string tuples: (name, value), one for each parameter
     def get_css_params_by_style_name(self, name):
         param_list = []
@@ -255,22 +263,108 @@ class FileManager:
         return len(self.page_files_paths)
 
 
-    # TODO: Make this actually copy files to EPUB folder, not only add manifest entries
     def add_font_file(self, file_path):
-        path = Path(file_path)
+        path_obj = Path(file_path)
 
-        file_name = path.name
+        file_name = path_obj.name
         if '.' in file_name:
             file_name = file_name.split('.', 1)[0]
+
+        new_path = path.join("edit", self.pathfinder.get_font_folder_path(), path_obj.name)
+        makedirs(path.dirname(new_path), exist_ok=True)
+        copyfile(file_path, new_path)
+
         
         attributes = [
             self.pathfinder.generate_manifest_id("font_" + file_name),
-            file_path,
+            new_path,
             self.FONT_MEDIA_TYPE
         ]
         self.pathfinder.add_item_to_rendition_manifest(attributes)
 
+        return new_path
+
 
     def remove_font_file(self, file_path):
+        path_obj = Path(file_path)
+
+        file_name = path_obj.name
+        if '.' in file_name:
+            file_name = file_name.split('.', 1)[0]
+
+        new_path = path.join("edit", self.pathfinder.get_font_folder_path(), path_obj.name)
+        try:
+            remove(path.abspath(new_path))
+        except FileNotFoundError as e:
+            print(e)
+
+        attributes = [
+            "font_" + file_name,
+            new_path,
+            self.FONT_MEDIA_TYPE
+        ]
+        self.pathfinder.remove_item_from_rendition_manifest(attributes)
+
+
+    def add_font_to_epub(self, font):
+        new_path = self.add_font_file(font.file_path)
+        self.add_css_font_property(font, new_path)
+
+
+    def remove_font_from_epub(self, font):
+        self.remove_font_file(font.file_path)
+        self.remove_css_font_property(font)
         pass
 
+
+    def add_css_font_property(self, font, book_relative_path):
+        font_list = self.get_all_css_fonts()
+
+        # Check if such property already exists
+        for css_font in font_list:
+            font_family = css_font.getProperties('font-family')[0].propertyValue.cssText
+            if font_family == font.name:
+                return
+            #font_path = font.getProperties('src')[0].propertyValue.cssText
+            #if 'url(' in font_path and font_path.index('url(') == 0:
+            #    font_path = font_path[4:-1]
+
+        # Add this to any CSS file
+        css_relative_path = path.relpath(path.normcase(path.abspath(book_relative_path)), path.normcase(path.dirname(self.css_file_paths[0])))
+        font_path = css_relative_path.replace(sep, '/')
+        font_style = CSSStyleDeclaration()
+        font_style.setProperty('font-family', value=font.name)
+        font_style.setProperty('src', value=f'url("{font_path}")')
+        self.css_files[0].add(CSSFontFaceRule(style=font_style))
+
+
+    def remove_css_font_property(self, font):
+        for file in self.css_files:
+            for index, rule in enumerate(file.cssRules):
+                if type(rule) == CSSFontFaceRule and rule.style.getProperties('font-family')[0].propertyValue.cssText == font.name:
+                    file.deleteRule(index)
+                    pass
+
+    def get_used_font_name_list(self):
+        font_list = []
+        for file in self.css_files:
+            for rule in file.cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
+                props = rule.style.getProperties('font-family')
+                if len(props) < 1:
+                    continue
+
+                font_text = props[0].propertyValue.cssText
+                if ',' in font_text:
+                    font_text = font_text.split(',', 1)[0]
+                
+                if font_text not in font_list:
+                    font_list.append(font_text)
+
+        return font_list
+
+    def get_css_font_name_list(self):
+        font_list = []
+        for file in self.css_files:
+            for item in file.cssRules.rulesOfType(cssutils.css.CSSRule.FONT_FACE_RULE):
+                font_list.append(item.style.getProperties('font-family')[0].propertyValue.cssText)
+        return font_list

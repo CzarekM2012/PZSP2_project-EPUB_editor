@@ -1,4 +1,6 @@
+from build.nsis.pkgs.cssutils import css
 from os import path
+from pathlib import Path
 from PySide6.QtGui import QAction, QFont, QKeySequence
 from PySide6.QtWidgets import QFrame, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
 # from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
@@ -10,13 +12,13 @@ from file_manager import FileManager
 from utility import *
 
 import re
+from font import Font
 
 RESULT_SUCCESS = 0 # Return value
 RESULT_CANCEL = 2
 
 
 HIGHLIGHT_COLOR_STRING = "#ffffab"
-
 
 class MainWindow(QMainWindow):
 
@@ -50,6 +52,15 @@ class MainWindow(QMainWindow):
         self.edited_css_path = None
         self.file_manager = FileManager()
 
+        # Load built-in fonts
+        self.fonts = {}
+        for font_name, fallback_font in font_list_built_in:
+            font = Font(font_name, Font.TYPE_NO_FILE, fallback=fallback_font)
+            self.fonts[str(font)] = font
+
+        # Import additional fonts from 'fonts' folder
+        self.import_fonts()
+
 
     def reload_interface(self):
         self.setup_menubar()
@@ -74,6 +85,11 @@ class MainWindow(QMainWindow):
         file_save_action.setShortcut(QKeySequence('Ctrl+s'))
         file_save_action.triggered.connect(self.file_save)
         self.menu.file_menu.addAction(file_save_action)
+
+        font_import_action = QAction(text='Import fonts', parent=self)
+        font_import_action.setShortcut(QKeySequence('Ctrl+Alt+f'))
+        font_import_action.triggered.connect(self.import_fonts)
+        self.menu.file_menu.addAction(font_import_action)
 
         self.view_change_action = QAction(text='Change view to text editor', parent=self)
         self.view_change_action.setShortcut(QKeySequence('Ctrl+Alt+v'))
@@ -155,9 +171,6 @@ class MainWindow(QMainWindow):
         control_panel_layout.addWidget(self.misc_prop_editor)
 
         self.control_panel.setLayout(control_panel_layout)
-
-    def get_font_names(self):
-        return [item[0] for item in font_list]
         
 
     def setup_css_editor(self):
@@ -187,9 +200,11 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(main_layout)
         self.setCentralWidget(self.central_widget)
+        
 
     def reload_editor_file(self, force=False):
         return self.editor_set_file(self.editor_combo_box_file.currentText(), force)
+
 
     # Connected to editor_combo_box_file
     def change_editor_file(self):
@@ -207,18 +222,25 @@ class MainWindow(QMainWindow):
         if chosen_font == "[None]":
             self.file_manager.remove_css_param(style_name, 'font-family')
             self.update_view()
+            self.check_add_used_fonts()
             return
 
-        for font, backup_font in font_list:
-            if font == chosen_font:
-                self.file_manager.set_css_param(style_name, 'font-family', f'"{font}", {backup_font}')
-                #print(self.file_manager.get_css_param(style_name, 'font-family'))
-                break
+        font = self.get_font_by_desc(chosen_font)
+        if font == None:
+            raise Exception(f"Chosen font: |{chosen_font}| has not been found")
+
+        if len(font.fallback.strip()) == 0:
+            self.file_manager.set_css_param(style_name, 'font-family', f'{font.name}')
+        else:        
+            self.file_manager.set_css_param(style_name, 'font-family', f'{font.name}, {font.fallback}')
         
+        self.check_add_used_fonts()
         self.update_view()
+
 
     def change_color_slider(self):
         self.change_color_rgb(*self.color_box.get_color_values())
+
 
     def remove_color(self):
         style_name = self.get_current_style_name()
@@ -228,6 +250,7 @@ class MainWindow(QMainWindow):
         self.color_box.reset_sliders()
         self.file_manager.remove_css_param(style_name, 'color')
         self.update_view()
+
 
     def change_color_rgb(self, r, g, b):
         """
@@ -246,6 +269,7 @@ class MainWindow(QMainWindow):
         self.file_manager.set_css_param(style_name, 'color', hex_string)
         self.update_view()
 
+
     # Connected to combo_box_style
     def change_edit_style(self):
         
@@ -258,29 +282,37 @@ class MainWindow(QMainWindow):
         
         # Update font selectors, add new fonts to list if missing
         current_font = self.file_manager.get_css_param(self.get_current_style_name(), 'font-family')
-        self.check_add_font(current_font)
+        #self.check_add_font(current_font)
         
-        self.combo_box_font.clear()
-        self.combo_box_font.addItem("[None]")
-        self.combo_box_font.addItems(self.get_font_names())
+        self.update_font_list()
+
+        font = self.get_font_by_css_string(current_font)
+        if font == None:
+            return
 
         font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
         current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
 
-        print(current_font_size, current_font_size_unit, self.get_current_style_name())
+        #print(current_font_size, current_font_size_unit, self.get_current_style_name())
         
         if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
             current_font_size_unit = '--'
         self.basic_font_editor.set_font_size_unit(current_font_size_unit)
         self.basic_font_editor.set_font_size(current_font_size)
 
-        for font_name, fallback_font in font_list:
-            if font_name in current_font:
-                index = self.combo_box_font.findText(font_name, Qt.MatchFixedString)
-                if index >= 0:
-                    self.combo_box_font.setCurrentIndex(index)
+        index = self.combo_box_font.findText(str(font), Qt.MatchFixedString)
+        if index >= 0:
+            self.combo_box_font.setCurrentIndex(index)
 
         self.update_view()
+    
+
+    def update_font_list(self):
+        self.combo_box_font.clear()
+        self.combo_box_font.addItem("[None]")
+        font_list = self.get_font_descriptions()
+        font_list.sort()
+        self.combo_box_font.addItems(font_list)
 
     
     def parse_font_size_str(self, string):
@@ -290,45 +322,57 @@ class MainWindow(QMainWindow):
         return font_size, font_size_unit
 
     
+    def get_font_descriptions(self):
+        return [str(font) for font_desc, font in self.fonts.items()]
 
-    def check_add_font(self, font_desc):
-        """
-        Adds a font from a CSS descriptor like '"Font", another-font' to the font_list
-        First checks if such font already exists in the list
-        """
-        # TODO: Check CSS guidline compliance
-        if font_desc == "" or font_desc == None:
-            return
+    def get_font_by_name(self, name):
+        for font_desc, font in self.fonts.items():
+            if name == font.name:
+                return font
+        return None
 
-        font_name = ""
-        fallback_font = "serif"
-        sign = ""
-        if '"' in font_desc:
-            sign = '"'
-        elif "'" in font_desc:
-            sign = "'"
-        else:
-            font_name = font_desc
+    def get_font_by_desc(self, desc):
+        for font_desc, font in self.fonts.items():
+            if desc in font_desc: # This way to also allow partial match
+                return font
+        return None
 
-        if sign != "":
-            start = font_desc.find(sign) + len(sign)
-            end = font_desc.find(sign, start + len(sign))
-            font_name = font_desc[start:end]
-            
-            if "sans-serif" in font_desc[:start] or "sans-serif" in font_desc[end:]:
-                fallback_font = "sans-serif"
-            
-            elif "monospace" in font_desc[:start] or "monospace" in font_desc[end:]:
-                fallback_font = "monospace"
+    def get_font_by_css_string(self, name):
+        return self.get_font_by_name(Font.get_font_from_css_string(name).name)
 
-            elif "cursive" in font_desc[:start] or "cursive" in font_desc[end:]:
-                fallback_font = "cursive"
 
-        font_tuple = (font_name, fallback_font)
-        if font_tuple not in font_list:
-            font_list.append(font_tuple)
+    # Checks if all used fonts are in EPUB. Adds or removes fonts otherwise
+    def check_add_used_fonts(self):
+        used_font_list = self.file_manager.get_used_font_name_list()
+        css_font_list = self.file_manager.get_css_font_name_list()
 
+        #print(used_font_list)
+        #print(css_font_list)
+
+        for font in used_font_list:
+            if font not in css_font_list:
+                font_obj = self.get_font_by_name(font)
+                if font_obj != None and font_obj.file_type == Font.TYPE_LOCAL_FILE:
+                    #print(f"Adding: {str(font_obj)}")
+                    self.file_manager.add_font_to_epub(font_obj)
         
+        
+        # The inner for loop has to be restarted after every remove
+        # otherwise, a rare exception may occur that a font is skipped
+        # because other font was removed and the list has shortened
+        removed = True
+        while removed:
+            removed = False
+            css_font_list = self.file_manager.get_css_font_name_list()
+            for font in css_font_list:
+                if font not in used_font_list:
+                    font_obj = self.get_font_by_name(font)
+                    if font_obj != None and font_obj.file_type == Font.TYPE_LOCAL_FILE:
+                        #print(f"Removing: {str(font_obj)}")
+                        self.file_manager.remove_font_from_epub(font_obj)
+                        removed = True
+                        break
+                
 
     def get_current_style_name(self):
         return str(self.combo_box_style.currentText())
@@ -359,6 +403,10 @@ class MainWindow(QMainWindow):
         self.webview.reload()
 
     def on_webview_reload(self):
+        if self.page_changed:
+            self.page_changed = False
+            self.update_view()
+            return
         self.file_manager.update_css()
         self.temporary_changes = False
 
@@ -371,9 +419,11 @@ class MainWindow(QMainWindow):
 
 
     def show_page(self, page_nr):
+        self.page_changed = True
         self.current_page_nr, self.shown_url = self.file_manager.get_page(page_nr)
         if not self.shown_url == None:
             self.webview.load(self.shown_url)
+
 
 
     # Returns 0 if succeded, otherwise a positive number indicating an error
@@ -436,15 +486,47 @@ class MainWindow(QMainWindow):
         
         self.editor_set_file(None) # Need to select a CSS file
 
+        self.import_fonts_from_book()
+
         self.combo_box_style.clear()
         self.editor_combo_box_file.clear()
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
         self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
+        # TEST
+        #font = list(self.fonts.values())[-4]
+        #self.file_manager.add_font_to_epub(font)
+        #self.file_manager.remove_font_from_epub(font)
+
         self.show_page(0)
+
+
+    def import_fonts_from_book(self):
+        css_font_list = self.file_manager.get_css_font_name_list()
+        css_font_list.extend(self.file_manager.get_used_font_name_list()) # Not sure if needed, but can be useful sometimes
+
+        for font_name in css_font_list:
+            if '"' in font_name or '"' in font_name:
+                font_name = font_name[1:-1]
+            
+            font = Font.get_font_from_css_string(font_name)
+            font.file_type = Font.TYPE_FROM_EPUB
+            
+            # A bit crude, but works
+            found = False
+            for font_2 in list(self.fonts.values()):
+                if font_2.name == font.name:
+                    found = True
+                    break
+
+            if not found: 
+                self.fonts[str(font)] = font
+
+        self.update_font_list()
 
     def file_open_error(self):
         self.display_prompt("Error", "ERROR - could not open file. Not a valid EPUB.", QMessageBox.Ok)
+
 
     # Returns a value to check if user wants to proceed or cancel, can also save changes
     def file_save_prompt(self):
@@ -456,8 +538,10 @@ class MainWindow(QMainWindow):
 
         return RESULT_CANCEL
 
+
     def editor_save_prompt(self):
         return self.display_prompt("Save CSS file", "Some changes have not been saved", QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+
 
     def display_prompt(self, title, message, button_flags):
         prompt = QMessageBox()
@@ -465,6 +549,7 @@ class MainWindow(QMainWindow):
         prompt.setText(message)
         prompt.setStandardButtons(button_flags)
         return prompt.exec()
+
 
     def file_save(self):
 
@@ -477,6 +562,16 @@ class MainWindow(QMainWindow):
         self.reload_interface()
         
     
+    # Check the "fonts" folder for new fonts
+    def import_fonts(self):
+        results = list(Path(".").rglob("*.[tT][tT][fF]"))
+
+        for font_path in results:
+            font = Font(str(font_path), file_type=Font.TYPE_LOCAL_FILE)
+            if str(font) not in self.fonts:
+                self.fonts[str(font)] = font
+        
+
     def change_view(self):
         if self.left_panel.layout().currentIndex() == 0:
             self.reload_editor_file(force=True)
@@ -493,6 +588,7 @@ class MainWindow(QMainWindow):
         
         self.update_view()
 
+
     def set_font_size(self):
         style_name = self.get_current_style_name()
         if style_name == "":
@@ -507,6 +603,7 @@ class MainWindow(QMainWindow):
         self.file_manager.set_css_param(style_name, 'font-size', value + unit)
         self.update_view()
     
+
     def set_misc_css_prop(self):
         style_name = self.get_current_style_name()
         if style_name == "":
@@ -517,6 +614,7 @@ class MainWindow(QMainWindow):
         
         self.file_manager.set_css_param(style_name, property, value)
         self.update_view()
+
 
     def remove_misc_css_prop(self):
         self.misc_prop_editor.set_value("")

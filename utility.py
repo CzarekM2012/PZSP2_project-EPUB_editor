@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QMessageBox
 
 
-font_list = [
+font_list_built_in = [
     ("Arial", "sans-serif"),
     ("Verdana", "sans-serif"),
     ("Helvetica", "sans-serif"),

@@ -27,7 +27,7 @@ class Highlighter(QSyntaxHighlighter):
         property_format = QTextCharFormat()
         property_format.setFontWeight(QFont.Bold)
         property_format.setForeground(QColor("orange"))
-        pattern = r'^\s*.*:'
+        pattern = r'^\s*[^:]*'
         self.add_mapping(pattern, property_format)
 
         selector_format = QTextCharFormat()
