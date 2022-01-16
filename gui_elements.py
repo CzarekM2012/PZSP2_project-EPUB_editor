@@ -1,8 +1,11 @@
+from cProfile import label
+from msilib.schema import ControlEvent
+from tkinter import Toplevel
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QFont, QDoubleValidator
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QLineEdit
+from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QLineEdit, QFrame
 from highlighter import Highlighter
 from utility import hex_to_rgb, rgb_to_hex
 
@@ -58,15 +61,160 @@ class CSSEditor(QTextEdit):
         self.highlighter.setup()
 
 
-class ColorBox(QWidget):
-    def __init__(self, change_color_action, remove_color_action):
+class ControlPanelElement(QWidget):
+    def __init__(self, label_style, label_text):
         super().__init__()
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setContentsMargins(0,0,0,0)
+
+        self.label = QLabel(label_text)
+        self.label.setStyleSheet(label_style)
+
+        self.main_layout.addWidget(self.label)
+        self.setLayout(self.main_layout)
+
+
+class ControlPanelComboBox(ControlPanelElement):
+    def __init__(self, label_style, label_text, action):
+        super().__init__(label_style, label_text)
+        self.setFixedHeight(60)
+
+        self.combo_box = QComboBox()
+        self.combo_box.currentTextChanged.connect(action)
+
+        self.main_layout.addWidget(self.combo_box)
+
+    def currentText(self):
+        return self.combo_box.currentText()
+
+    def clear(self):
+        self.combo_box.clear()
+
+    def addItems(self, items):
+        self.combo_box.addItems(items)
+
+    def addItem(self, item):
+        self.combo_box.addItem(item)
+
+    def findText(self, string, match_flag):
+        self.combo_box.findText(string, match_flag)
+
+    def setCurrentIndex(self, index):
+        self.combo_box.setCurrentIndex(index)
+
+
+class BasicFontEditor(ControlPanelElement):
+    def __init__(self, label_style, label_text, combo_box_action):
+        super().__init__(label_style, label_text)
+        self.setFixedHeight(160)
+
+        self.combo_box = QComboBox()
+        self.combo_box.currentTextChanged.connect(combo_box_action)
+        self.font_size_picker = FontSizePicker()
+        self.button_box = ButtonBox()
+
+        self.main_layout.addWidget(self.combo_box)
+        self.main_layout.addWidget(self.font_size_picker)
+        self.main_layout.addWidget(self.button_box)
+class ButtonBox(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedHeight(50)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+
+        font = QFont('', pointSize=16)
+        self.bold_button = QPushButton(text='B', font=font)
+        self.bold_button.setCheckable(True)
+
+        font = QFont('', pointSize=16, italic=True)
+        self.italic_button = QPushButton(text='I', font=font)
+        self.italic_button.setCheckable(True)
+
+        font = QFont('', pointSize=16)
+        font.setUnderline(True)
+        self.underline_button = QPushButton(text='U', font=font)
+        self.underline_button.setCheckable(True)
+
+        font = QFont('', pointSize=16)
+        font.setStrikeOut(True)
+        self.strikeout_button = QPushButton(text='ab', font=font)
+        self.strikeout_button.setCheckable(True)
+
+        layout.addWidget(self.bold_button)
+        layout.addWidget(self.italic_button)
+        layout.addWidget(self.underline_button)
+        layout.addWidget(self.strikeout_button)
+        self.setLayout(layout)
+
+
+class FontSizePicker(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedHeight(50)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+
+        self.decrease_button = QPushButton('-')
+        self.increase_button = QPushButton('+')
+        self.size_field = QLineEdit()
+        self.size_field.setValidator(QDoubleValidator(0, 500, 3))
+        self.unit_picker = QComboBox()
+
+        layout.addWidget(self.decrease_button)
+        layout.addWidget(self.increase_button)
+        layout.addWidget(self.size_field)
+        layout.addWidget(self.unit_picker)
+        self.setLayout(layout)
+
+
+class MiscCSSPropertyEditor(ControlPanelElement):
+    def __init__(self, label_style, label_text):
+        super().__init__(label_style, label_text)
+        self.setFixedHeight(120)
         layout = QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0,0,0,0)
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setContentsMargins(0,0,0,0)
+        main_widget = QWidget()
+
+        top_panel = QWidget()
+        top_panel.setFixedHeight(50)
+        bottom_panel = QWidget()
+        bottom_panel.setFixedHeight(50)
+        self.property_list = QComboBox()
+        self.value_field = QLineEdit()
+        self.save_button = QPushButton('save')
+        self.delete_button = QPushButton('delete')
+
+        top_layout.addWidget(self.property_list)
+        top_layout.addWidget(self.value_field)
+        top_panel.setLayout(top_layout)
+        bottom_layout.addWidget(self.save_button)
+        bottom_layout.addWidget(self.delete_button)
+        bottom_panel.setLayout(bottom_layout)
+
+        layout.addWidget(top_panel)
+        layout.addWidget(bottom_panel)
+        main_widget.setLayout(layout)
+        self.main_layout.addWidget(main_widget)
+        
+
+class ColorBox(ControlPanelElement):
+    def __init__(self, label_style, label_text, change_color_action, remove_color_action):
+        super().__init__(label_style, label_text)
+        self.setFixedHeight(180)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
         self.color_label = QLabel(text="No color specified")
-        self.color_label.setFont(QFont('Arial', 20))
+        self.color_label.setFont(QFont('Arial', 16))
         self.slider_color_r = ColorSlider()
         self.slider_color_g = ColorSlider()
         self.slider_color_b = ColorSlider()
+        main_widget = QWidget()
         
         self.slider_color_r.valueChanged.connect(change_color_action)
         self.slider_color_g.valueChanged.connect(change_color_action)
@@ -81,8 +229,8 @@ class ColorBox(QWidget):
         layout.addWidget(self.slider_color_b)
         layout.addWidget(self.color_remove_button)
 
-        self.setLayout(layout)
-        self.setFixedHeight(170)
+        main_widget.setLayout(layout)
+        self.main_layout.addWidget(main_widget)
 
     def get_color_values(self):
         return (self.slider_color_r.value(), 
@@ -136,53 +284,3 @@ class ColorSlider(QSlider):
         self.setMinimum(0)
         self.setMaximum(255)
         self.setSingleStep(1)
-
-
-class ButtonBox(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setFixedHeight(50)
-        layout = QHBoxLayout()
-
-        font = QFont('', pointSize=16)
-        self.bold_button = QPushButton(text='B', font=font)
-        self.bold_button.setCheckable(True)
-
-        font = QFont('', pointSize=16, italic=True)
-        self.italic_button = QPushButton(text='I', font=font)
-        self.italic_button.setCheckable(True)
-
-        font = QFont('', pointSize=16)
-        font.setUnderline(True)
-        self.underline_button = QPushButton(text='U', font=font)
-        self.underline_button.setCheckable(True)
-
-        font = QFont('', pointSize=16)
-        font.setStrikeOut(True)
-        self.strikeout_button = QPushButton(text='ab', font=font)
-        self.strikeout_button.setCheckable(True)
-
-        layout.addWidget(self.bold_button)
-        layout.addWidget(self.italic_button)
-        layout.addWidget(self.underline_button)
-        layout.addWidget(self.strikeout_button)
-        self.setLayout(layout)
-
-
-class FontSizePicker(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setFixedHeight(50)
-        layout = QHBoxLayout()
-
-        self.decrease_button = QPushButton('-')
-        self.increase_button = QPushButton('+')
-        self.size_field = QLineEdit()
-        self.size_field.setValidator(QDoubleValidator(0, 500, 3))
-        self.unit_picker = QComboBox()
-
-        layout.addWidget(self.decrease_button)
-        layout.addWidget(self.increase_button)
-        layout.addWidget(self.size_field)
-        layout.addWidget(self.unit_picker)
-        self.setLayout(layout)

@@ -1,6 +1,6 @@
 from os import path
 from PySide6.QtGui import QAction, QFont, QKeySequence
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
+from PySide6.QtWidgets import QFrame, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
 # from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
@@ -24,6 +24,19 @@ class MainWindow(QMainWindow):
         self.init_variables()
         self.reload_interface()
         self.file_open(path.join(path.dirname(__file__), 'books/manual.epub'))
+
+
+    def set_defaults(self):
+        self.setWindowTitle("EPUB CSS Editor")
+        # self.setFixedHeight(720)
+        # self.setFixedWidth(1280)
+        self.resize(self.screen_size * 0.7)
+
+
+    def init_variables(self):
+        self.current_page_nr = 0
+        self.edited_css_path = None
+        self.file_manager = FileManager()
 
 
     def reload_interface(self):
@@ -113,25 +126,20 @@ class MainWindow(QMainWindow):
 
 
     def setup_control_panel(self):
+        label_style = "QLabel { color : #448aff; font-size: 9pt; }"
         self.control_panel = QWidget()
         control_panel_layout = QVBoxLayout()
 
-        self.combo_box_style = QComboBox()
-        self.combo_box_style.currentTextChanged.connect(self.change_edit_style)
+        self.combo_box_style = ControlPanelComboBox(label_style, 'CSS style', self.change_edit_style)
 
-        self.combo_box_font = QComboBox()
-        self.combo_box_font.currentTextChanged.connect(self.change_font)
-
-        self.button_box = ButtonBox()
-        self.font_size_picker = FontSizePicker()
-        
-        self.color_box = ColorBox(self.change_color_slider, self.remove_color)
+        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font)
+        self.misc_css_property_editor = MiscCSSPropertyEditor(label_style, 'Other properties')
+        self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
-        control_panel_layout.addWidget(self.combo_box_font)
-        control_panel_layout.addWidget(self.button_box)
-        control_panel_layout.addWidget(self.font_size_picker)
+        control_panel_layout.addWidget(self.basic_font_editor)
         control_panel_layout.addWidget(self.color_box)
+        control_panel_layout.addWidget(self.misc_css_property_editor)
 
         self.control_panel.setLayout(control_panel_layout)
 
@@ -167,18 +175,6 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(main_layout)
         self.setCentralWidget(self.central_widget)
 
-
-    def set_defaults(self):
-        self.setWindowTitle("Edytor EPUB")
-        # self.setFixedHeight(720)
-        # self.setFixedWidth(1280)
-        self.resize(self.screen_size * 0.7)
-
-
-    def init_variables(self):
-        self.current_page_nr = 0
-        self.edited_css_path = None
-        self.file_manager = FileManager()
 
     def reload_editor_file(self):
         self.editor_set_file(self.editor_combo_box_file.currentText())
