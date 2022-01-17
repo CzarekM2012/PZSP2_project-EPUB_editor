@@ -1,4 +1,5 @@
 from os import path, listdir, mkdir, unlink, walk
+from pathlib import Path
 import zipfile
 from zipfile import ZIP_DEFLATED, ZipFile
 from shutil import rmtree
@@ -11,6 +12,8 @@ import cssutils
 from pathfinder import Pathfinder
 
 class FileManager:
+
+    FONT_MEDIA_TYPE = "application/x-font-ttf"
 
     def __init__(self):
         self.load_path = None
@@ -71,10 +74,12 @@ class FileManager:
             self.pathfinder.get_rendition_paths()
 
         #  can see written id and relpath from outside by checking list
-        item_attributes = ['daweq', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\test', 'qwedwasd']
-        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0])
-        print(self.pathfinder.get_rendition_manifest_items_attributes())
+        #item_attributes = ['daweq', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\test', 'qwedwasd']
+        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0])
+        #print(self.pathfinder.get_rendition_manifest_items_attributes())
+
+        #self.add_font_file("fonts\\alex-brush\\AlexBrush-Regular.ttf")
 
         self.load_css_files()
 
@@ -248,3 +253,24 @@ class FileManager:
 
     def get_page_count(self):
         return len(self.page_files_paths)
+
+
+    # TODO: Make this actually copy files to EPUB folder, not only add manifest entries
+    def add_font_file(self, file_path):
+        path = Path(file_path)
+
+        file_name = path.name
+        if '.' in file_name:
+            file_name = file_name.split('.', 1)[0]
+        
+        attributes = [
+            self.pathfinder.generate_manifest_id("font_" + file_name),
+            file_path,
+            self.FONT_MEDIA_TYPE
+        ]
+        self.pathfinder.add_item_to_rendition_manifest(attributes)
+
+
+    def remove_font_file(self, file_path):
+        pass
+

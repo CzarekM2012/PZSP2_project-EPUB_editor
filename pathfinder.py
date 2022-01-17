@@ -1,6 +1,7 @@
 from lxml import etree
 from os import path
 import io
+import random
 
 NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'EPUB': 'http://www.idpf.org/2007/ops',
@@ -59,6 +60,32 @@ class Pathfinder:
                 self.book_dir, opf_file_dirname, spine_file)
              for spine_file in rendition['spine']]
         return spine_files_paths, stylesheets_paths
+
+    def generate_manifest_id(self, base_name: str, rendition_id: int = 0):
+        '''
+        Generates a simple text with id based on given string
+        by appending random numbers at the end untill there is no other that matches it
+        '''
+        
+        # Copied from add_item_to_rendition_manifes. Probably would be better as a function
+        content = self._read(self.renditions[rendition_id]['opf_file'])
+        tree = self._parse_xml(content)
+        manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
+        children = manifest.getchildren()
+        ids = []
+        for child in children:
+            ids.append(child.get('id'))
+
+        if base_name not in ids:
+            return base_name
+
+        # Very simple id generation. Replace with something decent if need be
+        base_name += '_'
+        while base_name in ids:
+            base_name = base_name + str(random.randrange(0, 9))
+        
+        return base_name
+
 
     def add_item_to_rendition_manifest(self,
                                        item_attributes: list[str, str, str],
