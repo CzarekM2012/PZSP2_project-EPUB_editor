@@ -70,6 +70,12 @@ class FileManager:
         self.page_files_paths, self.css_file_paths =\
             self.pathfinder.get_rendition_paths()
 
+        #  can see written id and relpath from outside by checking list
+        item_attributes = ['daweq', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\test', 'qwedwasd']
+        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0])
+        print(self.pathfinder.get_rendition_manifest_items_attributes())
+
         self.load_css_files()
 
         print('File loaded')

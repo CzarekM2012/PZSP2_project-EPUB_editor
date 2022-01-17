@@ -45,6 +45,125 @@ class Pathfinder:
         self._load_container()
         self._load_views()
 
+    def get_rendition_paths(self, index: int = 0)\
+            -> tuple[list[str], list[str]]:
+        index = min(index, len(self.renditions) - 1)
+        rendition = self.renditions[index]
+        opf_file_dirname = path.dirname(rendition['opf_file'])
+        stylesheets_paths =\
+            [paths_join_normalize(
+                self.book_dir, opf_file_dirname, stylesheet)
+             for stylesheet in rendition['stylesheets']]
+        spine_files_paths =\
+            [paths_join_normalize(
+                self.book_dir, opf_file_dirname, spine_file)
+             for spine_file in rendition['spine']]
+        return spine_files_paths, stylesheets_paths
+
+    def add_item_to_rendition_manifest(self,
+                                       item_attributes: list[str, str, str],
+                                       rendition_id: int = 0) -> None:
+        '''
+        Works if `item_attributes[0]` is unique id and `item_attributes[1]` refers to a file not added to manifest already 
+        '''
+        content = self._read(self.renditions[rendition_id]['opf_file'])
+        tree = self._parse_xml(content)
+        manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
+        children = manifest.getchildren()
+        ids, hrefs = [], []
+        for child in children:
+            ids.append(child.get('id'))
+            hrefs.append(child.get('href'))
+        opf_file_path = paths_join_normalize(
+            self.book_dir, self.renditions[rendition_id]['opf_file'])
+        opf_file_dirname = path.dirname(opf_file_path)
+        item_attributes[1] = path.relpath(item_attributes[1], opf_file_dirname)
+        if item_attributes[1] in hrefs:
+            return  # file already added
+        if item_attributes[0] in ids:
+            pass  # change id
+        item = manifest.makeelement(f'{{{NAMESPACES["OPF"]}}}item',
+                                    attrib={'id': item_attributes[0],
+                                            'href': item_attributes[1],
+                                            'media-type': item_attributes[2]})
+        item.tail = children[-1].tail
+        children[-1].tail = manifest.text
+        manifest.extend([item])
+        serialized = etree.tostring(tree, encoding='utf-8', xml_declaration=True)
+        with open(opf_file_path, 'wb') as file:
+            file.write(serialized)
+
+    def remove_item_from_rendition_manifest(self, item_id: str = None, item_path: str = None, rendition_id: int = 0) -> tuple[bool, bool]:
+        '''
+        Probably works\n
+        Removes item with both id and href or at leas one of them matching given values(scenario dependand on given set of values)\n
+        First bool from returned tuple is `True` if item was removed, second - if file itself can be removed because it is not mentioned in manifests of other renditions
+        '''
+        if item_id is None and item_path is None:
+            return False, False
+        content = self._read(self.renditions[rendition_id]['opf_file'])
+        tree = self._parse_xml(content)
+        manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
+        children = manifest.getchildren()
+        if len(children) <= 2:  # at least 1 item in manifest
+            return False, False
+        opf_file_path = paths_join_normalize(
+            self.book_dir, self.renditions[rendition_id]['opf_file'])
+        opf_file_dirname = path.dirname(opf_file_path)
+        href = item_path
+        if href is not None:
+            href = path.relpath(href, opf_file_dirname)
+
+        matches = []
+        for child in children:
+            child_id = child.get('id')
+            child_href = child.get('href')
+            if item_id is not None and href is not None:
+                if item_id == child_id and href == child_href:
+                    matches.append(child)
+            elif item_id is not None:
+                if item_id == child_id:
+                    matches.append(child)
+            elif href == child_href:
+                matches.append(child)
+        if len(matches) != 1:
+            return False, False
+        match = matches[0]
+        if match == children[-1]:
+            children[-2].tail = children[-1].tail
+        item_path = paths_join_normalize(opf_file_dirname, match.get('href'))
+        manifest.remove(match)
+        serialized = etree.tostring(tree, encoding='utf-8', xml_declaration=True)
+        with open(opf_file_path, 'wb') as file:
+            file.write(serialized)
+
+        for i in range(len(self.renditions)):
+            if i == rendition_id:
+                continue
+            rendition_rel_path = self.renditions[i]['opf_file']
+            opf_file_dirname = path.dirname(paths_join_normalize(self.book_dir, rendition_rel_path))
+            href = path.relpath(item_path, opf_file_dirname)
+            content = self._read(rendition_rel_path)
+            tree = self._parse_xml(content)
+            manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
+            children = manifest.getchildren()
+            for child in children:
+                if child.get('href') == href:
+                    return True, False
+        return True, True
+
+
+    def get_rendition_manifest_items_attributes(self, rendition_id: int = 0) -> list[tuple[str, str, str]]:
+        '''
+        Works for sure
+        '''
+        content = self._read(self.renditions[rendition_id]['opf_file'])
+        tree = self._parse_xml(content)
+        manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
+        children = manifest.getchildren()
+        attributes = [(child.get('id'), child.get('href'), child.get('media-type')) for child in children]
+        return attributes
+
     def _parse_xml(self, xml: str) -> None:
         try:
             tree = etree.parse(io.BytesIO(xml.encode('utf-8')))
@@ -107,21 +226,6 @@ file is non-compliant with the standard')
         #self._load_guide()
 
         return spine, stylesheets
-
-    def get_rendition_paths(self, index: int = 0)\
-            -> tuple[list[str], list[str]]:
-        index = min(index, len(self.renditions) - 1)
-        rendition = self.renditions[index]
-        opf_file_dirname = path.dirname(rendition['opf_file'])
-        stylesheets_paths =\
-            [paths_join_normalize(
-                self.book_dir, opf_file_dirname, stylesheet)
-             for stylesheet in rendition['stylesheets']]
-        spine_files_paths =\
-            [paths_join_normalize(
-                self.book_dir, opf_file_dirname, spine_file)
-             for spine_file in rendition['spine']]
-        return spine_files_paths, stylesheets_paths
 
 #    '''def _load_metadata(self):
 #        container_root = self.container.getroot()
