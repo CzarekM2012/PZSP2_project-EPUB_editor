@@ -1,4 +1,3 @@
-from build.nsis.pkgs.cssutils import css
 from os import path
 from pathlib import Path
 from PySide6.QtGui import QAction, QFont, QKeySequence
