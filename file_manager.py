@@ -65,7 +65,8 @@ class FileManager:
             return 2
 
         try:
-            self.pathfinder.search()
+            self.pathfinder.find_renditions()
+            self.pathfinder.load_rendition()
         except Exception as e:
             print(f"Could not open file due to {e}")
             self.load_path = None

@@ -35,37 +35,49 @@ class Pathfinder:
     def __init__(self, book_dir: str = None) -> None:
         #  str -> str | list[str]
         # 'opf_file': str, 'spine': list[str], 'stylesheets': list[str]
-        self.renditions = list[dict]()
+        self._rendition = (-1,
+                           {'spine': list[str](),
+                            'stylesheets': list[str]()})
+        self._opf_files = list[str]()
         self.set_book_dir(book_dir=book_dir)
 
     def set_book_dir(self, book_dir: str = None) -> None:
         self.book_dir = book_dir
 
-    def search(self) -> None:
-        self.renditions.clear()
+    def find_renditions(self) -> None:
+        self._rendition = (-1,
+                           {'spine': list[str](),
+                            'stylesheets': list[str]()})
+        self._opf_files.clear()
         self._load_container()
-        self._load_views()
 
-    def get_rendition_paths(self, index: int = 0)\
+    def load_rendition(self, index: int = 0) -> None:
+        index = min(index, len(self._opf_files) - 1)
+        spine, stylesheets =\
+            self._load_opf_file(self._opf_files[index])
+        self._rendition = (index,
+                           {'spine': spine,
+                            'stylesheets': stylesheets})
+
+    def get_rendition_paths(self)\
             -> tuple[list[str], list[str]]:
-        index = min(index, len(self.renditions) - 1)
-        rendition = self.renditions[index]
-        opf_file_dirname = path.dirname(rendition['opf_file'])
-        stylesheets_paths =\
-            [paths_join_normalize(
-                self.book_dir, opf_file_dirname, stylesheet)
-             for stylesheet in rendition['stylesheets']]
+        opf_file_path, spine, stylesheets = self._get_rendition_data()
+        opf_file_dirname = path.dirname(opf_file_path)
         spine_files_paths =\
             [paths_join_normalize(
                 self.book_dir, opf_file_dirname, spine_file)
-             for spine_file in rendition['spine']]
+             for spine_file in spine]
+        stylesheets_paths =\
+            [paths_join_normalize(
+                self.book_dir, opf_file_dirname, stylesheet)
+             for stylesheet in stylesheets]
         return spine_files_paths, stylesheets_paths
 
-    def get_opf_file_path(self, rendition_id: int = 0):
-        return self.renditions[rendition_id]['opf_file']
-    
-    def get_opf_folder_path(self, rendition_id: int = 0):
-        return path.dirname(self.get_opf_file_path(rendition_id))
+    def get_opf_file_path(self):
+        return self._get_rendition_data()[0]
+
+    def get_opf_folder_path(self):
+        return path.dirname(self.get_opf_file_path())
 
     # TODO: Replace with something sensible
     def get_font_folder_path(self, rendition_id: int = 0):
@@ -76,7 +88,7 @@ class Pathfinder:
         Generates a simple text with id based on given string
         by appending random numbers at the end untill there is no other that matches it
         '''
-        
+
         # Copied from add_item_to_rendition_manifes. Probably would be better as a function
         content = self._read(self.renditions[rendition_id]['opf_file'])
         tree = self._parse_xml(content)
@@ -93,7 +105,7 @@ class Pathfinder:
         base_name += '_'
         while base_name in ids:
             base_name = base_name + str(random.randrange(0, 9))
-        
+
         return base_name
 
 
@@ -191,7 +203,6 @@ class Pathfinder:
                     return True, False
         return True, True
 
-
     def get_rendition_manifest_items_attributes(self, rendition_id: int = 0) -> list[tuple[str, str, str]]:
         '''
         Works for sure
@@ -211,12 +222,13 @@ class Pathfinder:
 
         return tree
 
-    def _load_views(self) -> None:
-        for i in range(len(self.renditions)):
-            spine, stylesheets =\
-                self._load_opf_file(self.renditions[i]['opf_file'])
-            self.renditions[i]['spine'] = spine
-            self.renditions[i]['stylesheets'] = stylesheets
+    def _get_rendition_data(self) -> tuple[str, list[str], list[str]]:
+        if self._rendition[0] == -1:
+            raise RuntimeError('No rendition has been loaded yet, \
+use load_rendition() method first')
+        return self._opf_files[self._rendition[0]],\
+            self._rendition[1]['spine'],\
+            self._rendition[1]['stylesheets']
 
     def _load_container(self) -> None:
         try:
@@ -236,11 +248,8 @@ contains no referrence to file describing structure of the book view, \
 and therefore book cannot be read')
         for root_file in views:
             if root_file.get('media-type') == 'application/oebps-package+xml':
-                self.renditions.append(
-                    {'opf_file': root_file.get('full-path'),
-                     'spine': list[str](),
-                     'stylesheets': list[str]()})
-        if len(self.renditions) == 0:
+                self._opf_files.append(root_file.get('full-path'))
+        if len(self._opf_files) == 0:
             raise MissingValueError('None of book rendition references \
 in \"META-INF/container.xml\" is marked with proper media-type and therefore, \
 file is non-compliant with the standard')
