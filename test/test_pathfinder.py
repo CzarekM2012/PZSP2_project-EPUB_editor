@@ -153,7 +153,7 @@ class TestPathfinder(unittest.TestCase):
         self.test_pathfinder.find_renditions()
         self.test_pathfinder.load_rendition()
 
-        opf_file_path, spines, stylesheets =\
+        opf_file_path, spines, stylesheets, _ =\
             self.test_pathfinder._get_rendition_data()
         self.assertEqual(expected_opf_file_path, opf_file_path)
         self.assertListEqual(expected_spines, spines)

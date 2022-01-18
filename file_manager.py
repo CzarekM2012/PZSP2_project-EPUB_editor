@@ -77,9 +77,15 @@ class FileManager:
             self.pathfinder.get_rendition_paths()
 
         #  can see written id and relpath from outside by checking list
-        #item_attributes = ['daweq', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\test', 'qwedwasd']
-        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0])
+        item_attributes = ['Page01', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\ytfgu7g67', 'qwedwasd']
+        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_id=item_attributes[0])
+        item_attributes[0] = 'Page01'
+        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_path=item_attributes[1])
+        item_attributes[0] = 'Page01'
+        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0], item_attributes[1])
         #print(self.pathfinder.get_rendition_manifest_items_attributes())
 
         #self.add_font_file("fonts\\alex-brush\\AlexBrush-Regular.ttf")

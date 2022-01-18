@@ -37,7 +37,8 @@ class Pathfinder:
         # 'opf_file': str, 'spine': list[str], 'stylesheets': list[str]
         self._rendition = (-1,
                            {'spine': list[str](),
-                            'stylesheets': list[str]()})
+                            'stylesheets': list[str]()},
+                           None)
         self._opf_files = list[str]()
         self.set_book_dir(book_dir=book_dir)
 
@@ -47,21 +48,22 @@ class Pathfinder:
     def find_renditions(self) -> None:
         self._rendition = (-1,
                            {'spine': list[str](),
-                            'stylesheets': list[str]()})
+                            'stylesheets': list[str]()},
+                           None)
         self._opf_files.clear()
         self._load_container()
 
     def load_rendition(self, index: int = 0) -> None:
         index = min(index, len(self._opf_files) - 1)
-        spine, stylesheets =\
-            self._load_opf_file(self._opf_files[index])
+        spine, stylesheets, opf_file_tree = self._load_opf_file(index)
         self._rendition = (index,
                            {'spine': spine,
-                            'stylesheets': stylesheets})
+                            'stylesheets': stylesheets},
+                           opf_file_tree)
 
     def get_rendition_paths(self)\
             -> tuple[list[str], list[str]]:
-        opf_file_path, spine, stylesheets = self._get_rendition_data()
+        opf_file_path, spine, stylesheets, _ = self._get_rendition_data()
         opf_file_dirname = path.dirname(opf_file_path)
         spine_files_paths =\
             [paths_join_normalize(
@@ -80,69 +82,38 @@ class Pathfinder:
         return path.dirname(self.get_opf_file_path())
 
     # TODO: Replace with something sensible
-    def get_font_folder_path(self, rendition_id: int = 0):
-        return path.join(self.get_opf_folder_path(rendition_id), 'Fonts')
+    def get_font_folder_path(self):
+        return path.join(self.get_opf_folder_path(), 'Fonts')
 
-    def generate_manifest_id(self, base_name: str, rendition_id: int = 0):
-        '''
-        Generates a simple text with id based on given string
-        by appending random numbers at the end untill there is no other that matches it
-        '''
-
-        # Copied from add_item_to_rendition_manifes. Probably would be better as a function
-        content = self._read(self.renditions[rendition_id]['opf_file'])
-        tree = self._parse_xml(content)
-        manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
-        children = manifest.getchildren()
-        ids = []
-        for child in children:
-            ids.append(child.get('id'))
-
-        if base_name not in ids:
-            return base_name
-
-        # Very simple id generation. Replace with something decent if need be
-        base_name += '_'
-        while base_name in ids:
-            base_name = base_name + str(random.randrange(0, 9))
-
-        return base_name
-
-
-    def add_item_to_rendition_manifest(self,
-                                       item_attributes: list[str, str, str],
-                                       rendition_id: int = 0) -> None:
+    def add_item_to_rendition_manifest(self, item_attributes:
+                                       list[str, str, str]) -> bool:
         '''
         Works if `item_attributes[0]` is unique id and `item_attributes[1]` refers to a file not added to manifest already 
         '''
-        content = self._read(self.renditions[rendition_id]['opf_file'])
-        tree = self._parse_xml(content)
-        manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
-        children = manifest.getchildren()
-        ids, hrefs = [], []
-        for child in children:
-            ids.append(child.get('id'))
-            hrefs.append(child.get('href'))
+        opf_file_path, _, _, opf_file_tree = self._get_rendition_data()
+        manifest = opf_file_tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
         opf_file_path = paths_join_normalize(
-            self.book_dir, self.renditions[rendition_id]['opf_file'])
+            self.book_dir, opf_file_path)
         opf_file_dirname = path.dirname(opf_file_path)
-        item_attributes[1] = path.relpath(item_attributes[1], opf_file_dirname)
-        if item_attributes[1] in hrefs:
-            return  # file already added
-        if item_attributes[0] in ids:
-            pass  # change id
+        item_href = path.relpath(item_attributes[1], opf_file_dirname)
+        if manifest.find(f'{{{NAMESPACES["OPF"]}}}item[@href="{item_href}"]')\
+           is not None:  # file already added
+            return False
+
+        item_attributes[0] =\
+            self._generate_not_present_id(manifest, item_attributes[0])
         item = manifest.makeelement(f'{{{NAMESPACES["OPF"]}}}item',
                                     attrib={'id': item_attributes[0],
-                                            'href': item_attributes[1],
+                                            'href': item_href,
                                             'media-type': item_attributes[2]})
-        item.tail = children[-1].tail
-        children[-1].tail = manifest.text
+        item.tail = manifest[-1].tail
+        manifest[-1].tail = manifest.text
         manifest.extend([item])
-        serialized = etree.tostring(tree, encoding='utf-8', xml_declaration=True)
+        serialized = etree.tostring(opf_file_tree, encoding='utf-8', xml_declaration=True)
         with open(opf_file_path, 'wb') as file:
             file.write(serialized)
 
-    def remove_item_from_rendition_manifest(self, item_id: str = None, item_path: str = None, rendition_id: int = 0) -> tuple[bool, bool]:
+    def remove_item_from_rendition_manifest(self, item_id: str = None, item_path: str = None) -> tuple[bool, bool]:
         '''
         Probably works\n
         Removes item with both id and href or at leas one of them matching given values(scenario dependand on given set of values)\n
@@ -150,58 +121,68 @@ class Pathfinder:
         '''
         if item_id is None and item_path is None:
             return False, False
-        content = self._read(self.renditions[rendition_id]['opf_file'])
-        tree = self._parse_xml(content)
-        manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
-        children = manifest.getchildren()
-        if len(children) <= 2:  # at least 1 item in manifest
+        opf_file_path, _, _, opf_file_tree = self._get_rendition_data()
+        manifest = opf_file_tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
+        if len(manifest) <= 2:  # at least 1 item in manifest at all times
             return False, False
         opf_file_path = paths_join_normalize(
-            self.book_dir, self.renditions[rendition_id]['opf_file'])
+            self.book_dir, opf_file_path)
         opf_file_dirname = path.dirname(opf_file_path)
-        href = item_path
-        if href is not None:
-            href = path.relpath(href, opf_file_dirname)
+        item_href = item_path
+        if item_href is not None:
+            item_href = path.relpath(item_href, opf_file_dirname)
 
-        matches = []
-        for child in children:
-            child_id = child.get('id')
-            child_href = child.get('href')
-            if item_id is not None and href is not None:
-                if item_id == child_id and href == child_href:
-                    matches.append(child)
-            elif item_id is not None:
-                if item_id == child_id:
-                    matches.append(child)
-            elif href == child_href:
-                matches.append(child)
-            elif item_id in child_id:
-                matches.append(child)
+        if item_id is not None and item_href is not None:
+            ids = manifest.findall(f'{{{NAMESPACES["OPF"]}}}item\
+[@id="{item_id}"]')
+            hrefs = manifest.findall(f'{{{NAMESPACES["OPF"]}}}item\
+[@href="{item_href}"]')
+            matches = list(set(ids) & set(hrefs))
+        elif item_id is not None:
+            matches = manifest.findall(f'{{{NAMESPACES["OPF"]}}}item\
+[@id="{item_id}"]')
+        else:
+            matches = manifest.findall(f'{{{NAMESPACES["OPF"]}}}item\
+[@href="{item_href}"]')
         if len(matches) != 1:
             return False, False
+
         match = matches[0]
-        if match == children[-1]:
-            children[-2].tail = children[-1].tail
+        if match == manifest[-1]:
+            manifest[-2].tail = manifest[-1].tail
         item_path = paths_join_normalize(opf_file_dirname, match.get('href'))
         manifest.remove(match)
-        serialized = etree.tostring(tree, encoding='utf-8', xml_declaration=True)
+        serialized = etree.tostring(opf_file_tree, encoding='utf-8', xml_declaration=True)
         with open(opf_file_path, 'wb') as file:
             file.write(serialized)
 
-        for i in range(len(self.renditions)):
-            if i == rendition_id:
+        for i in range(len(self._opf_files)):
+            if i == self._rendition[0]:
                 continue
-            rendition_rel_path = self.renditions[i]['opf_file']
-            opf_file_dirname = path.dirname(paths_join_normalize(self.book_dir, rendition_rel_path))
-            href = path.relpath(item_path, opf_file_dirname)
-            content = self._read(rendition_rel_path)
-            tree = self._parse_xml(content)
-            manifest = tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
-            children = manifest.getchildren()
-            for child in children:
-                if child.get('href') == href:
-                    return True, False
+            if self._is_file_in_rendition_manifest(item_path, i):
+                return True, False
         return True, True
+
+    def _generate_not_present_id(self, manifest, base_id: str) -> str:
+        # Very simple id generation. Replace with something decent if need be
+        new_id = base_id
+        while manifest.find(f'{{{NAMESPACES["OPF"]}}}item[@id="{new_id}"]')\
+                is not None:
+            new_id += str(random.randint(0, 9))
+        return new_id
+
+    def _is_file_in_rendition_manifest(self, filepath: str,
+                                       rendition_id: int) -> bool:
+        _, _, rendition_tree = self._load_opf_file(rendition_id)
+        rendition_rel_path = self._opf_files[rendition_id]
+        opf_file_dirname = path.dirname(paths_join_normalize(
+            self.book_dir, rendition_rel_path))
+        href = path.relpath(filepath, opf_file_dirname)
+        manifest = rendition_tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
+        if manifest.find(f'{{{NAMESPACES["OPF"]}}}item[@href="{href}"]')\
+           is not None:
+            return True
+        return False
 
     def get_rendition_manifest_items_attributes(self, rendition_id: int = 0) -> list[tuple[str, str, str]]:
         '''
@@ -222,13 +203,14 @@ class Pathfinder:
 
         return tree
 
-    def _get_rendition_data(self) -> tuple[str, list[str], list[str]]:
+    def _get_rendition_data(self):
         if self._rendition[0] == -1:
             raise RuntimeError('No rendition has been loaded yet, \
 use load_rendition() method first')
         return self._opf_files[self._rendition[0]],\
             self._rendition[1]['spine'],\
-            self._rendition[1]['stylesheets']
+            self._rendition[1]['stylesheets'],\
+            self._rendition[2]
 
     def _load_container(self) -> None:
         try:
@@ -259,21 +241,22 @@ file is non-compliant with the standard')
             content = file.read()
         return content
 
-    def _load_opf_file(self, opf_file_internal_path: str)\
-            -> tuple[list[str], list[str]]:
+    def _load_opf_file(self, opf_file_index: int)\
+            -> tuple[list[str], list[str], None]:
+        opf_file_internal_path = self._opf_files[opf_file_index]
         try:
             content = self._read(opf_file_internal_path)
         except FileNotFoundError:
             raise FileNotFoundError(-1, 'Can not find container file')
 
-        container = self._parse_xml(content)
+        opf_file_tree = self._parse_xml(content)
 
         #self._load_metadata()
-        id_to_href, stylesheets = self._load_manifest(container)
-        spine = self._load_spine(container, id_to_href)
+        id_to_href, stylesheets = self._load_manifest(opf_file_tree)
+        spine = self._load_spine(opf_file_tree, id_to_href)
         #self._load_guide()
 
-        return spine, stylesheets
+        return spine, stylesheets, opf_file_tree
 
 #    '''def _load_metadata(self):
 #        container_root = self.container.getroot()
