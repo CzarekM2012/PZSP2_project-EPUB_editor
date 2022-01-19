@@ -1,4 +1,3 @@
-from build.nsis.pkgs.cssutils import css
 from os import path
 from pathlib import Path
 from PySide6.QtGui import QAction, QFont, QKeySequence
@@ -42,8 +41,6 @@ class MainWindow(QMainWindow):
 
     def set_defaults(self):
         self.setWindowTitle("EPUB CSS Editor")
-        # self.setFixedHeight(720)
-        # self.setFixedWidth(1280)
         self.resize(self.screen_size * 0.7)
 
 
@@ -159,8 +156,7 @@ class MainWindow(QMainWindow):
         control_panel_layout = QVBoxLayout()
 
         self.combo_box_style = ControlPanelComboBox(label_style, 'CSS style', self.change_edit_style)
-
-        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size)
+        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size, self.trigger_basic_css_prop)
         self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
         self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop, self.remove_misc_css_prop, self.set_misc_value_on_prop_change)
         self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.remove_color)
@@ -272,16 +268,27 @@ class MainWindow(QMainWindow):
 
     # Connected to combo_box_style
     def change_edit_style(self):
+        style_name = self.get_current_style_name()
+
+        font_size_str = self.file_manager.get_css_param(style_name, 'font-size')
+        current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
+
+        self.toggle_button_states(style_name)
+        
+        if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
+            current_font_size_unit = '--'
+        self.basic_font_editor.set_font_size_unit(current_font_size_unit)
+        self.basic_font_editor.set_font_size(current_font_size)
         
         # Update color sliders
-        color = self.file_manager.get_css_param(self.get_current_style_name(), 'color')
+        color = self.file_manager.get_css_param(style_name, 'color')
         if color == "":
             self.color_box.reset_sliders()
         else:
             self.color_box.set_sliders_hex(color)
         
         # Update font selectors, add new fonts to list if missing
-        current_font = self.file_manager.get_css_param(self.get_current_style_name(), 'font-family')
+        current_font = self.file_manager.get_css_param(style_name, 'font-family')
         #self.check_add_font(current_font)
         
         self.update_font_list()
@@ -290,21 +297,23 @@ class MainWindow(QMainWindow):
         if font == None:
             return
 
-        font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
-        current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
-
-        #print(current_font_size, current_font_size_unit, self.get_current_style_name())
-        
-        if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
-            current_font_size_unit = '--'
-        self.basic_font_editor.set_font_size_unit(current_font_size_unit)
-        self.basic_font_editor.set_font_size(current_font_size)
-
         index = self.combo_box_font.findText(str(font), Qt.MatchFixedString)
         if index >= 0:
             self.combo_box_font.setCurrentIndex(index)
 
         self.update_view()
+
+    def toggle_button_states(self, style_name):
+        states_dict = {}
+        bold_val = self.file_manager.get_css_param(style_name, 'font-weight')
+        italic_val = self.file_manager.get_css_param(style_name, 'font-style')
+        decor_vals = self.file_manager.get_css_param(style_name, 'text-decoration')
+        decor_vals = decor_vals.split(' ')
+        states_dict['bold'] = bold_val == 'bold'
+        states_dict['italic'] = italic_val == 'italic'
+        states_dict['underline'] = 'underline' in decor_vals
+        states_dict['line-through'] = 'line-through' in decor_vals
+        self.basic_font_editor.toggle_button_states(states_dict)
     
 
     def update_font_list(self):
@@ -602,7 +611,43 @@ class MainWindow(QMainWindow):
 
         self.file_manager.set_css_param(style_name, 'font-size', value + unit)
         self.update_view()
+
+
+    def trigger_basic_css_prop(self, prop):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        if prop == 'bold':
+            self.trigger_bold(style_name)
+        elif prop == 'italic':
+            self.trigger_italic(style_name)
+        else:
+            current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
+            vals = current_val.split(' ')
+            if prop in vals:
+                vals.remove(prop)
+            else:
+                if 'none' in vals:
+                    vals.remove('none')
+                vals = [prop] + vals
+            new_val = ' '.join(vals)
+            self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
+        self.update_view()
     
+    def trigger_bold(self, style_name):
+        current_val = self.file_manager.get_css_param(style_name, 'font-weight')
+        if current_val == 'normal':
+            self.file_manager.set_css_param(style_name, 'font-weight', 'bold')
+        else:
+            self.file_manager.set_css_param(style_name, 'font-weight', 'normal')
+
+    def trigger_italic(self, style_name):
+        current_val = self.file_manager.get_css_param(style_name, 'font-style')
+        if current_val == 'normal':
+            self.file_manager.set_css_param(style_name, 'font-style', 'italic')
+        else:
+            self.file_manager.set_css_param(style_name, 'font-style', 'normal')
 
     def set_misc_css_prop(self):
         style_name = self.get_current_style_name()
