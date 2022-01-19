@@ -283,7 +283,7 @@ class FileManager:
 
         
         attributes = [
-            self.pathfinder.generate_manifest_id("font_" + file_name),
+            "font_" + file_name,
             new_path,
             self.FONT_MEDIA_TYPE
         ]
@@ -310,7 +310,7 @@ class FileManager:
             new_path,
             self.FONT_MEDIA_TYPE
         ]
-        self.pathfinder.remove_item_from_rendition_manifest(attributes)
+        self.pathfinder.remove_item_from_rendition_manifest(attributes[0], attributes[1])
 
 
     def add_font_to_epub(self, font):
