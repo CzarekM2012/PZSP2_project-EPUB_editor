@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
         self.combo_box_style = ControlPanelComboBox(label_style, 'CSS style', self.change_edit_style)
         self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size, self.trigger_basic_css_prop)
         self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
-        self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop, self.remove_misc_css_prop, self.set_misc_value_on_prop_change)
+        self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop, self.remove_misc_css_prop, self.update_misc_value)
         self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
@@ -217,7 +217,7 @@ class MainWindow(QMainWindow):
             
         if chosen_font == "[None]":
             self.file_manager.remove_css_param(style_name, 'font-family')
-            self.update_view()
+            self.update_editor()
             self.check_add_used_fonts()
             return
 
@@ -231,7 +231,7 @@ class MainWindow(QMainWindow):
             self.file_manager.set_css_param(style_name, 'font-family', f'{font.name}, {font.fallback}')
         
         self.check_add_used_fonts()
-        self.update_view()
+        self.update_editor()
 
 
     def change_color_slider(self):
@@ -245,7 +245,7 @@ class MainWindow(QMainWindow):
 
         self.color_box.reset_sliders()
         self.file_manager.remove_css_param(style_name, 'color')
-        self.update_view()
+        self.update_editor()
 
 
     def change_color_rgb(self, r, g, b):
@@ -263,45 +263,17 @@ class MainWindow(QMainWindow):
         #print(f"Setting color to: {hex_string}")
 
         self.file_manager.set_css_param(style_name, 'color', hex_string)
-        self.update_view()
+        self.update_editor()
 
 
     # Connected to combo_box_style
     def change_edit_style(self):
-        style_name = self.get_current_style_name()
+        self.update_editor()
 
-        font_size_str = self.file_manager.get_css_param(style_name, 'font-size')
-        current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
 
-        self.toggle_button_states(style_name)
-        
-        if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
-            current_font_size_unit = '--'
-        self.basic_font_editor.set_font_size_unit(current_font_size_unit)
-        self.basic_font_editor.set_font_size(current_font_size)
-        
-        # Update color sliders
-        color = self.file_manager.get_css_param(style_name, 'color')
-        if color == "":
-            self.color_box.reset_sliders()
-        else:
-            self.color_box.set_sliders_hex(color)
-        
-        # Update font selectors, add new fonts to list if missing
-        current_font = self.file_manager.get_css_param(style_name, 'font-family')
-        #self.check_add_font(current_font)
-        
-        self.update_font_list()
+    def set_interface_signal_lock(self, on):
+        self.combo_box_font.blockSignals(on)
 
-        font = self.get_font_by_css_string(current_font)
-        if font == None:
-            return
-
-        index = self.combo_box_font.findText(str(font), Qt.MatchFixedString)
-        if index >= 0:
-            self.combo_box_font.setCurrentIndex(index)
-
-        self.update_view()
 
     def toggle_button_states(self, style_name):
         states_dict = {}
@@ -387,6 +359,54 @@ class MainWindow(QMainWindow):
         return str(self.combo_box_style.currentText())
 
 
+    def update_editor(self):
+        self.update_interface()
+        self.update_view()
+
+
+    # Updates all UI components in the graphical editor
+    def update_interface(self):
+
+        self.set_interface_signal_lock(True)
+
+        style_name = self.get_current_style_name()
+        
+        font_size_str = self.file_manager.get_css_param(style_name, 'font-size')
+        current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
+        
+        self.toggle_button_states(style_name)
+        
+        if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
+            current_font_size_unit = '--'
+        self.basic_font_editor.set_font_size_unit(current_font_size_unit)
+        self.basic_font_editor.set_font_size(current_font_size)
+        
+        # Update color sliders
+        color = self.file_manager.get_css_param(style_name, 'color')
+        if color == "":
+            self.color_box.reset_sliders()
+        else:
+            self.color_box.set_sliders_hex(color)
+        
+        # Update font selectors, add new fonts to list if missing
+        current_font = self.file_manager.get_css_param(style_name, 'font-family')
+        #self.check_add_font(current_font)
+        
+        self.update_font_list()
+
+        font = self.get_font_by_css_string(current_font)
+        if font == None:
+            return
+
+        index = self.combo_box_font.findText(str(font), Qt.MatchFixedString)
+        if index >= 0:
+            self.combo_box_font.setCurrentIndex(index)
+
+        self.update_misc_value()
+
+        self.set_interface_signal_lock(False)
+
+
     def update_view(self):
         """
         Updates the text display on the right side.
@@ -411,10 +431,11 @@ class MainWindow(QMainWindow):
         self.file_manager.update_css()
         self.webview.reload()
 
+
     def on_webview_reload(self):
         if self.page_changed:
             self.page_changed = False
-            self.update_view()
+            self.update_editor()
             return
         self.file_manager.update_css()
         self.temporary_changes = False
@@ -473,7 +494,7 @@ class MainWindow(QMainWindow):
     def editor_save_changes(self):
         self.file_manager.overwrite_css_file_with_text(self.edited_css_path, self.css_editor.toPlainText())
         #self.file_manager.update_css() # Not needed, overwrite() already writes changes to the file
-        self.update_view()
+        self.update_editor()
 
 
     # Funkcje wykorzystywane prze QAction
@@ -589,13 +610,13 @@ class MainWindow(QMainWindow):
         else:
             result = self.reload_editor_file(force=False) # Try to save file
             if result == RESULT_CANCEL:
-                self.update_view()
+                self.update_editor()
                 return
 
             self.left_panel.layout().setCurrentIndex(0)
             self.view_change_action.setText('Change view to text editor')
         
-        self.update_view()
+        self.update_editor()
 
 
     def set_font_size(self):
@@ -610,7 +631,7 @@ class MainWindow(QMainWindow):
             _, unit = self.parse_font_size_str(font_size_str)
 
         self.file_manager.set_css_param(style_name, 'font-size', value + unit)
-        self.update_view()
+        self.update_editor()
 
 
     def trigger_basic_css_prop(self, prop):
@@ -633,21 +654,37 @@ class MainWindow(QMainWindow):
                 vals = [prop] + vals
             new_val = ' '.join(vals)
             self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
-        self.update_view()
+        
+        self.update_editor()
     
     def trigger_bold(self, style_name):
-        current_val = self.file_manager.get_css_param(style_name, 'font-weight')
-        if current_val == 'normal':
+        #current_val = self.file_manager.get_css_param(style_name, 'font-weight')
+        
+        #if current_val == 'normal' or current_val == '':
+        #    self.file_manager.set_css_param(style_name, 'font-weight', 'bold')
+        #else:
+        #    self.file_manager.set_css_param(style_name, 'font-weight', 'normal')
+
+        button_checked = self.basic_font_editor.button_box.bold_button.isChecked()
+
+        if button_checked:
             self.file_manager.set_css_param(style_name, 'font-weight', 'bold')
         else:
-            self.file_manager.set_css_param(style_name, 'font-weight', 'normal')
+            self.file_manager.remove_css_param(style_name, 'font-weight')
 
     def trigger_italic(self, style_name):
-        current_val = self.file_manager.get_css_param(style_name, 'font-style')
-        if current_val == 'normal':
+        #current_val = self.file_manager.get_css_param(style_name, 'font-style')
+        #if current_val == 'normal' or current_val == '':
+        #    self.file_manager.set_css_param(style_name, 'font-style', 'italic')
+        #else:
+        #    self.file_manager.set_css_param(style_name, 'font-style', 'normal')
+
+        button_checked = self.basic_font_editor.button_box.italic_button.isChecked()
+
+        if button_checked:
             self.file_manager.set_css_param(style_name, 'font-style', 'italic')
         else:
-            self.file_manager.set_css_param(style_name, 'font-style', 'normal')
+            self.file_manager.remove_css_param(style_name, 'font-style')
 
     def set_misc_css_prop(self):
         style_name = self.get_current_style_name()
@@ -658,7 +695,8 @@ class MainWindow(QMainWindow):
         value = self.misc_prop_editor.get_value()
         
         self.file_manager.set_css_param(style_name, property, value)
-        self.update_view()
+
+        self.update_editor()
 
 
     def remove_misc_css_prop(self):
@@ -671,9 +709,10 @@ class MainWindow(QMainWindow):
         property = self.misc_prop_editor.get_prop_name()
         
         self.file_manager.remove_css_param(style_name, property)
-        self.update_view()
+
+        self.update_editor()
     
-    def set_misc_value_on_prop_change(self):
+    def update_misc_value(self):
         style_name = self.get_current_style_name()
         if style_name == "":
             self.misc_prop_editor.set_value("")
