@@ -65,7 +65,8 @@ class FileManager:
             return 2
 
         try:
-            self.pathfinder.search()
+            self.pathfinder.find_renditions()
+            self.pathfinder.load_rendition()
         except Exception as e:
             print(f"Could not open file due to {e}")
             self.load_path = None
@@ -76,9 +77,15 @@ class FileManager:
             self.pathfinder.get_rendition_paths()
 
         #  can see written id and relpath from outside by checking list
-        #item_attributes = ['daweq', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\test', 'qwedwasd']
-        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0])
+        item_attributes = ['Page01', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\ytfgu7g67', 'qwedwasd']
+        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_id=item_attributes[0])
+        item_attributes[0] = 'Page01'
+        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_path=item_attributes[1])
+        item_attributes[0] = 'Page01'
+        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0], item_attributes[1])
         #print(self.pathfinder.get_rendition_manifest_items_attributes())
 
         #self.add_font_file("fonts\\alex-brush\\AlexBrush-Regular.ttf")
@@ -276,7 +283,7 @@ class FileManager:
 
         
         attributes = [
-            self.pathfinder.generate_manifest_id("font_" + file_name),
+            "font_" + file_name,
             new_path,
             self.FONT_MEDIA_TYPE
         ]
@@ -303,7 +310,7 @@ class FileManager:
             new_path,
             self.FONT_MEDIA_TYPE
         ]
-        self.pathfinder.remove_item_from_rendition_manifest(attributes)
+        self.pathfinder.remove_item_from_rendition_manifest(attributes[0], attributes[1])
 
 
     def add_font_to_epub(self, font):

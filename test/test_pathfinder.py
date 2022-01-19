@@ -37,35 +37,35 @@ class TestPathfinder(unittest.TestCase):
 
         self.assertEqual(written_content, file_content)
 
-    def test__load_container_no_META_INF_container_xml(self) -> None:
+    def test_find_renditions_no_META_INF_container_xml(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir,
                                         'META-INF_container.xml_missing')
 
         self.test_pathfinder.set_book_dir(test_dir)
 
         with self.assertRaises(FileNotFoundError):
-            self.test_pathfinder._load_container()
+            self.test_pathfinder.find_renditions()
 
-    def test__load_container_no_rootfiles(self) -> None:
+    def test_find_renditions_no_rootfiles(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir, 'no_rootfile')
 
         self.test_pathfinder.set_book_dir(test_dir)
 
         with self.assertRaises(MissingValueError):
-            self.test_pathfinder._load_container()
+            self.test_pathfinder.find_renditions()
 
-    def test__load_container_single_rootfile(self) -> None:
+    def test_find_renditions_single_rootfile(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir, 'single_rootfile')
         opf_file_internal_path = paths_join_normalize('OEBPS', 'content.opf')
 
         self.test_pathfinder.set_book_dir(test_dir)
-        self.test_pathfinder._load_container()
+        self.test_pathfinder.find_renditions()
 
         self.assertEqual(opf_file_internal_path,
                          path.normcase(path.normpath(
-                             self.test_pathfinder.renditions[0]['opf_file'])))
+                             self.test_pathfinder._opf_files[0])))
 
-    def test__load_container_multiple_rootfiles_single_content_opf(self)\
+    def test_find_renditions_multiple_rootfiles_single_content_opf(self)\
             -> None:
         # Doesn't check if every file mentioned in rootfiles exists
         test_dir =\
@@ -75,18 +75,14 @@ class TestPathfinder(unittest.TestCase):
             ['OEBPS/content1.opf', 'OEBPS/content2.opf']
 
         self.test_pathfinder.set_book_dir(test_dir)
-        self.test_pathfinder._load_container()
+        self.test_pathfinder.find_renditions()
 
-        opf_files_internal_paths =\
-            [rendition['opf_file'] for rendition in
-             self.test_pathfinder.renditions]
         self.assertListEqual(expected_opf_files_internal_paths,
-                             opf_files_internal_paths)
+                             self.test_pathfinder._opf_files)
         with self.assertRaises(FileNotFoundError):
-            self.test_pathfinder._read(
-                self.test_pathfinder.renditions[1]['opf_file'])
+            self.test_pathfinder.load_rendition(1)
 
-    def test__load_container_multiple_rootfiles_multiple_contents_opf(self)\
+    def test_find_renditions_multiple_rootfiles_multiple_contents_opf(self)\
             -> None:
         test_dir =\
             paths_join_normalize(self.test_dirs_dir,
@@ -95,26 +91,21 @@ class TestPathfinder(unittest.TestCase):
             ['OEBPS/content1.opf', 'OEBPS/content2.opf']
 
         self.test_pathfinder.set_book_dir(test_dir)
-        self.test_pathfinder._load_container()
+        self.test_pathfinder.find_renditions()
 
-        opf_files_internal_paths =\
-            [rendition['opf_file'] for rendition in
-             self.test_pathfinder.renditions]
         self.assertListEqual(expected_opf_files_internal_paths,
-                             opf_files_internal_paths)
-        self.test_pathfinder._read(
-                self.test_pathfinder.renditions[1]['opf_file'])
+                             self.test_pathfinder._opf_files)
+        self.test_pathfinder.load_rendition(1)
 
-    def test__load_opf_file_opf_file_missing(self) -> None:
+    def test_load_rendition_opf_file_missing(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir,
                                         'single_rootfile;content.opf_missing')
 
         self.test_pathfinder.set_book_dir(test_dir)
-        self.test_pathfinder._load_container()
+        self.test_pathfinder.find_renditions()
 
         with self.assertRaises(FileNotFoundError):
-            self.test_pathfinder._load_opf_file(
-                self.test_pathfinder.renditions[0]['opf_file'])
+            self.test_pathfinder.load_rendition()
 
     def test__load_manifest(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir, 'single_rootfile')
@@ -129,10 +120,10 @@ class TestPathfinder(unittest.TestCase):
         expected_stylesheets = ['css/styles.css']
 
         self.test_pathfinder.set_book_dir(test_dir)
-        self.test_pathfinder._load_container()
+        self.test_pathfinder.find_renditions()
         structure = self.test_pathfinder._parse_xml(
             self.test_pathfinder._read(
-                self.test_pathfinder.renditions[0]['opf_file']))
+                self.test_pathfinder._opf_files[0]))
         items, stylesheets = self.test_pathfinder._load_manifest(structure)
 
         self.assertDictEqual(expected_items, items)
@@ -143,28 +134,27 @@ class TestPathfinder(unittest.TestCase):
         expected_spine = ['Page01.xhtml', 'Page02.xhtml', 'Page03.xhtml']
 
         self.test_pathfinder.set_book_dir(test_dir)
-        self.test_pathfinder._load_container()
+        self.test_pathfinder.find_renditions()
         structure = self.test_pathfinder._parse_xml(
             self.test_pathfinder._read(
-                self.test_pathfinder.renditions[0]['opf_file']))
+                self.test_pathfinder._opf_files[0]))
         items, _ = self.test_pathfinder._load_manifest(structure)
         spine = self.test_pathfinder._load_spine(structure, items)
 
         self.assertListEqual(expected_spine, spine)
 
-    def test_search(self) -> None:
+    def test_load_rendition(self) -> None:
         test_dir = paths_join_normalize(self.test_dirs_dir, 'single_rootfile')
-        expected_spines = [['Page01.xhtml', 'Page02.xhtml', 'Page03.xhtml']]
-        expected_stylesheets = [['css/styles.css']]
+        expected_opf_file_path = 'OEBPS/content.opf'
+        expected_spines = ['Page01.xhtml', 'Page02.xhtml', 'Page03.xhtml']
+        expected_stylesheets = ['css/styles.css']
 
         self.test_pathfinder.set_book_dir(test_dir)
-        self.test_pathfinder.search()
+        self.test_pathfinder.find_renditions()
+        self.test_pathfinder.load_rendition()
 
-        spines = []
-        stylesheets = []
-        for i in range(len(self.test_pathfinder.renditions)):
-            spines.append(self.test_pathfinder.renditions[i]['spine'])
-            stylesheets.append(
-                self.test_pathfinder.renditions[i]['stylesheets'])
+        opf_file_path, spines, stylesheets, _ =\
+            self.test_pathfinder._get_rendition_data()
+        self.assertEqual(expected_opf_file_path, opf_file_path)
         self.assertListEqual(expected_spines, spines)
         self.assertListEqual(expected_stylesheets, stylesheets)
