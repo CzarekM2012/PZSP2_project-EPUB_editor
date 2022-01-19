@@ -1,5 +1,6 @@
 from cProfile import label
 from msilib.schema import ControlEvent
+from os import stat
 from tkinter import Toplevel
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QFont, QDoubleValidator
@@ -104,14 +105,14 @@ class ControlPanelComboBox(ControlPanelElement):
 
 
 class BasicFontEditor(ControlPanelElement):
-    def __init__(self, label_style, label_text, combo_box_action, font_size_picker_action):
+    def __init__(self, label_style, label_text, combo_box_action, font_size_picker_action, button_box_action):
         super().__init__(label_style, label_text)
         self.setFixedHeight(160)
 
         self.combo_box = QComboBox()
         self.combo_box.currentTextChanged.connect(combo_box_action)
         self.font_size_picker = FontSizePicker(font_size_picker_action)
-        self.button_box = ButtonBox()
+        self.button_box = ButtonBox(button_box_action)
 
         self.main_layout.addWidget(self.combo_box)
         self.main_layout.addWidget(self.font_size_picker)
@@ -132,9 +133,13 @@ class BasicFontEditor(ControlPanelElement):
     def is_supported_unit(self, value):
         return self.font_size_picker.is_supported_unit(value)
 
+    def toggle_button_states(self, states_dict):
+        self.button_box.toggle_button_states(states_dict)
+
 class ButtonBox(QWidget):
-    def __init__(self):
+    def __init__(self, action):
         super().__init__()
+        self.action = action
         self.setFixedHeight(50)
 
         layout = QHBoxLayout()
@@ -143,26 +148,48 @@ class ButtonBox(QWidget):
         font = QFont('', pointSize=16)
         self.bold_button = QPushButton(text='B', font=font)
         self.bold_button.setCheckable(True)
+        self.bold_button.clicked.connect(self.bold_action)
 
         font = QFont('', pointSize=16, italic=True)
         self.italic_button = QPushButton(text='I', font=font)
         self.italic_button.setCheckable(True)
+        self.italic_button.clicked.connect(self.italic_action)
 
         font = QFont('', pointSize=16)
         font.setUnderline(True)
         self.underline_button = QPushButton(text='U', font=font)
         self.underline_button.setCheckable(True)
+        self.underline_button.clicked.connect(self.underline_action)
 
         font = QFont('', pointSize=16)
         font.setStrikeOut(True)
         self.strikeout_button = QPushButton(text='ab', font=font)
         self.strikeout_button.setCheckable(True)
+        self.strikeout_button.clicked.connect(self.stikeout_action)
 
         layout.addWidget(self.bold_button)
         layout.addWidget(self.italic_button)
         layout.addWidget(self.underline_button)
         layout.addWidget(self.strikeout_button)
         self.setLayout(layout)
+
+    def underline_action(self):
+        self.action('underline')
+    
+    def bold_action(self):
+        self.action('bold')
+
+    def italic_action(self):
+        self.action('italic')
+
+    def stikeout_action(self):
+        self.action('line-through')
+
+    def toggle_button_states(self, states_dict):
+        self.bold_button.setChecked(states_dict['bold'])
+        self.italic_button.setChecked(states_dict['italic'])
+        self.underline_button.setChecked(states_dict['underline'])
+        self.strikeout_button.setChecked(states_dict['line-through'])
 
 
 class FontSizePicker(QWidget):
