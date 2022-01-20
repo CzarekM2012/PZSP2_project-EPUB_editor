@@ -1,4 +1,3 @@
-from os import path
 from pathlib import Path
 from PySide6.QtGui import QAction, QFont, QKeySequence
 from PySide6.QtWidgets import QFrame, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
@@ -27,7 +26,7 @@ class MainWindow(QMainWindow):
         self.set_defaults()
         self.init_variables()
         self.reload_interface()
-        self.file_open(path.join(path.dirname(__file__), 'books/manual.epub'))
+        self.file_open(Path(__file__).parent / 'books/manual.epub')
 
     def closeEvent(self, evnt):
         print("Closing")
@@ -496,17 +495,13 @@ class MainWindow(QMainWindow):
 
 
     # Funkcje wykorzystywane prze QAction
-    def file_open(self, file=''):
+    def file_open(self, file: Path = None):
 
         file_path = file
         if not file_path:
-            file_path =  QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]
+            file_path =  Path(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
         
-        if '.' not in file_path: # Trying to open a directory or just cancelling
-            return
-
-        if str(file_path).rsplit('.', 1)[1] != "epub":
-            self.file_open_error()
+        if not file_path.suffix == '.epub':
             return
 
         result = self.file_manager.load_book(file_path)
@@ -595,7 +590,7 @@ class MainWindow(QMainWindow):
     
     # Check the "fonts" folder for new fonts
     def import_fonts(self):
-        results = list(Path(path.realpath(__file__)).parents[0].joinpath("fonts").rglob("*.[tT][tT][fF]"))
+        results = list((Path(__file__).parent /"fonts").rglob("*.[tT][tT][fF]"))
         
         for font_path in results:
             font = Font(str(font_path), file_type=Font.TYPE_LOCAL_FILE)
