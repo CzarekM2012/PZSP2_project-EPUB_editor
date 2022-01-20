@@ -1,4 +1,5 @@
-from os import path, listdir, mkdir, makedirs, unlink, walk, sep, remove
+from os import listdir, mkdir, makedirs, unlink, walk, sep, remove
+from os.path import relpath
 from pathlib import Path
 import zipfile
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -22,22 +23,22 @@ class FileManager:
         self.css_files = []
         self.css_file_paths = []
         self.page_files_paths = []
-        self.edition_dir = path.join(path.dirname(__file__), 'edit')
+        self.edition_dir = Path(__file__).parent / 'edit'
         self.pathfinder = Pathfinder(self.edition_dir)
         self.prepare_edition_dir()
 
     def prepare_edition_dir(self):
-        if path.isdir(self.edition_dir):
+        if self.edition_dir.is_dir():
             for filename in listdir(self.edition_dir):
-                file_path = path.join(self.edition_dir, filename)
+                file_path = self.edition_dir / filename
                 try:
-                    if path.isfile(file_path) or path.islink(file_path):
+                    if file_path.is_file() or file_path.is_symlink():
                         unlink(file_path)
-                    elif path.isdir(file_path):
+                    elif file_path.is_dir():
                         rmtree(file_path)
                 except OSError as e:
                     # Probably only open file or lack of permissions
-                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+                    print(f'Failed to delete {file_path}. Reason: {e}')
             return
         mkdir(self.edition_dir)
 
@@ -46,7 +47,7 @@ class FileManager:
         Unpacks a zip from specified path into the editing directory.
         Returns 0 if succeded, or a positive number otherwise
         """
-        self.load_path = path.abspath(file_path)
+        self.load_path = Path(file_path)
         self.prepare_edition_dir()
 
         try:
@@ -76,16 +77,13 @@ class FileManager:
         self.page_files_paths, self.css_file_paths =\
             self.pathfinder.get_rendition_paths()
 
-        #  can see written id and relpath from outside by checking list
         #item_attributes = ['Page01', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\ytfgu7g67', 'qwedwasd']
-        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_id=item_attributes[0])
-        #item_attributes[0] = 'Page01'
-        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_path=item_attributes[1])
-        #item_attributes[0] = 'Page01'
-        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0], item_attributes[1])
+        #ids = self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_id=ids[0])
+        #ids = self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_path=ids[1])
+        #ids = self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(ids[0], ids[1])
         #print(self.pathfinder.get_rendition_manifest_items_attributes())
 
         #self.add_font_file("fonts\\alex-brush\\AlexBrush-Regular.ttf")
@@ -158,7 +156,7 @@ class FileManager:
             for item in file.cssRules.rulesOfType(cssutils.css.CSSRule.FONT_FACE_RULE):
                 font_list.append(item.style)
         return font_list
-    
+
     # Returns a list of string tuples: (name, value), one for each parameter
     def get_css_params_by_style_name(self, name):
         param_list = []
@@ -225,7 +223,7 @@ class FileManager:
 
     def save_book(self, file_path):
 
-        save_path = path.abspath(file_path)
+        save_path = Path(file_path).resolve()
         self.update_css()
 
         # folder_name = path.splitext(path.basename(save_path))[0]
@@ -236,9 +234,9 @@ class FileManager:
 
             for root, dirs, files in walk(self.edition_dir):
                 for file in files:
-                    book.write(path.join(root, file),
-                               path.relpath(path.join(root, file),
-                               self.edition_dir))
+                    file_path = Path(root) / file
+                    book.write(file_path,
+                               file_path.relative_to(self.edition_dir))
             book.close()
         except PermissionError as e:
             print(f"Could not save file due to {e}")
@@ -259,8 +257,7 @@ class FileManager:
         elif page_nr >= self.get_page_count():
             page_nr = 0
 
-        page_file_path = path.join(self.edition_dir,
-                                   self.page_files_paths[page_nr])
+        page_file_path = self.edition_dir / self.page_files_paths[page_nr]
 
         # Also return page nr, because it can change
         return page_nr, QUrl.fromLocalFile(page_file_path)
@@ -277,12 +274,10 @@ class FileManager:
         if '.' in file_name:
             file_name = file_name.split('.', 1)[0]
 
-        current_folder_path = Path(path.realpath(__file__)).parents[0].absolute()
-        new_path = path.join(current_folder_path, "edit", self.pathfinder.get_font_folder_path(), path_obj.name)
-        makedirs(path.dirname(new_path), exist_ok=True)
+        new_path = self.edition_dir / self.pathfinder.get_font_folder_path() / path_obj.name
+        makedirs(new_path.parent, exist_ok=True)
         copyfile(file_path, new_path)
 
-        
         attributes = [
             "font_" + file_name,
             new_path,
@@ -300,19 +295,17 @@ class FileManager:
         if '.' in file_name:
             file_name = file_name.split('.', 1)[0]
 
-        current_folder_path = Path(path.realpath(__file__)).parents[0].absolute()
-        new_path = path.join(current_folder_path, "edit", self.pathfinder.get_font_folder_path(), path_obj.name)
+        new_path = self.edition_dir / self.pathfinder.get_font_folder_path() / path_obj.name
         try:
-            remove(path.abspath(new_path))
+            remove(Path(new_path).resolve())
         except FileNotFoundError as e:
             print(e)
 
         attributes = [
             "font_" + file_name,
-            new_path,
-            self.FONT_MEDIA_TYPE
+            new_path
         ]
-        self.pathfinder.remove_item_from_rendition_manifest(attributes[0], attributes[1])
+        self.pathfinder.remove_item_from_rendition_manifest(attributes)
 
 
     def add_font_to_epub(self, font):
@@ -339,7 +332,7 @@ class FileManager:
             #    font_path = font_path[4:-1]
 
         # Add this to any CSS file
-        css_relative_path = path.relpath(path.normcase(path.abspath(book_relative_path)), path.normcase(path.dirname(self.css_file_paths[0])))
+        css_relative_path = relpath(book_relative_path, self.css_file_paths[0].parent)
         font_path = css_relative_path.replace(sep, '/')
         font_style = CSSStyleDeclaration()
         font_style.setProperty('font-family', value=font.name)
