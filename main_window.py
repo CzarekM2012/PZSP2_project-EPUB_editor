@@ -594,8 +594,8 @@ class MainWindow(QMainWindow):
     
     # Check the "fonts" folder for new fonts
     def import_fonts(self):
-        results = list(Path(".").rglob("*.[tT][tT][fF]"))
-
+        results = list(Path(path.realpath(__file__)).parents[0].joinpath("fonts").rglob("*.[tT][tT][fF]"))
+        
         for font_path in results:
             font = Font(str(font_path), file_type=Font.TYPE_LOCAL_FILE)
             if str(font) not in self.fonts:

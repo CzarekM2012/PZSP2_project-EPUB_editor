@@ -77,15 +77,15 @@ class FileManager:
             self.pathfinder.get_rendition_paths()
 
         #  can see written id and relpath from outside by checking list
-        item_attributes = ['Page01', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\ytfgu7g67', 'qwedwasd']
-        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_id=item_attributes[0])
-        item_attributes[0] = 'Page01'
-        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_path=item_attributes[1])
-        item_attributes[0] = 'Page01'
-        self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0], item_attributes[1])
+        #item_attributes = ['Page01', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\ytfgu7g67', 'qwedwasd']
+        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_id=item_attributes[0])
+        #item_attributes[0] = 'Page01'
+        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_path=item_attributes[1])
+        #item_attributes[0] = 'Page01'
+        #self.pathfinder.add_item_to_rendition_manifest(item_attributes)
+        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_attributes[0], item_attributes[1])
         #print(self.pathfinder.get_rendition_manifest_items_attributes())
 
         #self.add_font_file("fonts\\alex-brush\\AlexBrush-Regular.ttf")
@@ -277,7 +277,8 @@ class FileManager:
         if '.' in file_name:
             file_name = file_name.split('.', 1)[0]
 
-        new_path = path.join("edit", self.pathfinder.get_font_folder_path(), path_obj.name)
+        current_folder_path = Path(path.realpath(__file__)).parents[0].absolute()
+        new_path = path.join(current_folder_path, "edit", self.pathfinder.get_font_folder_path(), path_obj.name)
         makedirs(path.dirname(new_path), exist_ok=True)
         copyfile(file_path, new_path)
 
@@ -299,7 +300,8 @@ class FileManager:
         if '.' in file_name:
             file_name = file_name.split('.', 1)[0]
 
-        new_path = path.join("edit", self.pathfinder.get_font_folder_path(), path_obj.name)
+        current_folder_path = Path(path.realpath(__file__)).parents[0].absolute()
+        new_path = path.join(current_folder_path, "edit", self.pathfinder.get_font_folder_path(), path_obj.name)
         try:
             remove(path.abspath(new_path))
         except FileNotFoundError as e:
