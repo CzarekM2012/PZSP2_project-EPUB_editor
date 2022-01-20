@@ -1,62 +1,62 @@
+from os import path
+from pathlib import Path
 from PySide6.QtGui import QAction, QFont, QKeySequence
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
-from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
+from PySide6.QtWidgets import QFrame, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
+# from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl, Qt
 
 from gui_elements import *
 from file_manager import FileManager
+from utility import *
 
-import time
-import threading
+import re
+from font import Font
+
+RESULT_SUCCESS = 0 # Return value
+RESULT_CANCEL = 2
+
 
 HIGHLIGHT_COLOR_STRING = "#ffffab"
 
-font_list = [
-    ("Arial", "sans-serif"),
-    ("Verdana", "sans-serif"),
-    ("Helvetica", "sans-serif"),
-    ("Tahoma", "sans-serif"),
-    ("Trebuchet MS", "sans-serif"),
-    ("Times New Roman", "serif"),
-    ("Georgia", "serif"),
-    ("Garamond", "serif"),
-    ("Courier New", "monospace"),
-    ("Brush Script MT", "cursive"),
-]
-
-def rgb_to_hex(r, g, b):
-    """
-    Takes values from range 0-255 and returns a hex string in format "RRGGBB"
-    """
-    return '#%02x%02x%02x' % (r, g, b)
-
-def hex_to_rgb(hex_string):
-    """
-    String has to be formatted this way: "RRGGBB" or "RGB" (shorthand version)
-    Returns a tuple of integers like (R, G, B), where each value is in range 0-255
-    """
-    #print(f'String to parse: "{hex_string}"')
-
-    if len(hex_string) == 6:                # Classic hex string
-        r = int("0x" + hex_string[:2], 0)
-        g = int("0x" + hex_string[2:4], 0)
-        b = int("0x" + hex_string[4:], 0)
-    elif len(hex_string) == 3:              # Shorthand hex string
-        r = int("0x" + hex_string[0] + hex_string[0], 0)
-        g = int("0x" + hex_string[1] + hex_string[1], 0)
-        b = int("0x" + hex_string[2] + hex_string[2], 0)
-    else :                                  # Not a valid hex string
-        return None
-    return (r, g, b)
-
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, screen_size):
         super(MainWindow, self).__init__()
+        self.screen_size = screen_size
         self.set_defaults()
         self.init_variables()
         self.reload_interface()
+        self.file_open(path.join(path.dirname(__file__), 'books/manual.epub'))
+
+    def closeEvent(self, evnt):
+        print("Closing")
+
+        result = self.file_save_prompt()
+        if result == RESULT_CANCEL:
+            evnt.ignore()
+            return
+        
+        super(MainWindow, self).closeEvent(evnt)
+
+    def set_defaults(self):
+        self.setWindowTitle("EPUB CSS Editor")
+        self.resize(self.screen_size * 0.7)
+
+
+    def init_variables(self):
+        self.current_page_nr = 0
+        self.edited_css_path = None
+        self.file_manager = FileManager()
+
+        # Load built-in fonts
+        self.fonts = {}
+        for font_name, fallback_font in font_list_built_in:
+            font = Font(font_name, Font.TYPE_NO_FILE, fallback=fallback_font)
+            self.fonts[str(font)] = font
+
+        # Import additional fonts from 'fonts' folder
+        self.import_fonts()
 
 
     def reload_interface(self):
@@ -82,6 +82,11 @@ class MainWindow(QMainWindow):
         file_save_action.setShortcut(QKeySequence('Ctrl+s'))
         file_save_action.triggered.connect(self.file_save)
         self.menu.file_menu.addAction(file_save_action)
+
+        font_import_action = QAction(text='Import fonts', parent=self)
+        font_import_action.setShortcut(QKeySequence('Ctrl+Alt+f'))
+        font_import_action.triggered.connect(self.import_fonts)
+        self.menu.file_menu.addAction(font_import_action)
 
         self.view_change_action = QAction(text='Change view to text editor', parent=self)
         self.view_change_action.setShortcut(QKeySequence('Ctrl+Alt+v'))
@@ -137,6 +142,7 @@ class MainWindow(QMainWindow):
         self.setup_control_panel()
         self.setup_css_editor()
         self.left_panel = QWidget()
+        self.left_panel.setFixedWidth(400)
         left_panel_layout = QStackedLayout()
         left_panel_layout.addWidget(self.control_panel)
         left_panel_layout.addWidget(self.editor_panel)
@@ -145,52 +151,22 @@ class MainWindow(QMainWindow):
 
 
     def setup_control_panel(self):
+        label_style = "QLabel { color : #448aff; font-size: 9pt; }"
         self.control_panel = QWidget()
         control_panel_layout = QVBoxLayout()
 
-        self.combo_box_style = QComboBox()
-        self.combo_box_style.currentTextChanged.connect(self.change_edit_style)
-
-        self.combo_box_font = QComboBox()
-        self.combo_box_font.currentTextChanged.connect(self.change_font)
-        
-        self.color_box = QWidget()
-        color_box_layout = QVBoxLayout()
-        self.color_label = QLabel(text="No color specified")
-        self.color_label.setFont(QFont('Arial', 20))
-        self.slider_color_r = QSlider(orientation=Qt.Orientation.Horizontal)
-        self.slider_color_g = QSlider(orientation=Qt.Orientation.Horizontal)
-        self.slider_color_b = QSlider(orientation=Qt.Orientation.Horizontal)
-        self.slider_color_r.setMinimum(0)
-        self.slider_color_r.setMaximum(255)
-        self.slider_color_r.setSingleStep(1)
-        self.slider_color_g.setMinimum(0)
-        self.slider_color_g.setMaximum(255)
-        self.slider_color_g.setSingleStep(1)
-        self.slider_color_b.setMinimum(0)
-        self.slider_color_b.setMaximum(255)
-        self.slider_color_b.setSingleStep(1)
-        self.slider_color_r.valueChanged.connect(self.change_color_slider)
-        self.slider_color_g.valueChanged.connect(self.change_color_slider)
-        self.slider_color_b.valueChanged.connect(self.change_color_slider)
-        self.color_remove_button = QPushButton(text="Remove color")
-        self.color_remove_button.clicked.connect(self.remove_color)
-        color_box_layout.addWidget(self.color_label)
-        color_box_layout.addWidget(self.slider_color_r)
-        color_box_layout.addWidget(self.slider_color_g)
-        color_box_layout.addWidget(self.slider_color_b)
-        color_box_layout.addWidget(self.color_remove_button)
-        self.color_box.setLayout(color_box_layout)
-        self.color_box.setFixedHeight(170)
+        self.combo_box_style = ControlPanelComboBox(label_style, 'CSS style', self.change_edit_style)
+        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size, self.trigger_basic_css_prop)
+        self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
+        self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop, self.remove_misc_css_prop, self.update_misc_value)
+        self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.color_update_confirm, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
-        control_panel_layout.addWidget(self.combo_box_font)
+        control_panel_layout.addWidget(self.basic_font_editor)
         control_panel_layout.addWidget(self.color_box)
+        control_panel_layout.addWidget(self.misc_prop_editor)
 
         self.control_panel.setLayout(control_panel_layout)
-
-    def get_font_names(self):
-        return [item[0] for item in font_list]
         
 
     def setup_css_editor(self):
@@ -220,25 +196,15 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(main_layout)
         self.setCentralWidget(self.central_widget)
+        
 
+    def reload_editor_file(self, force=False):
+        return self.editor_set_file(self.editor_combo_box_file.currentText(), force)
 
-    def set_defaults(self):
-        self.setWindowTitle("Edytor EPUB")
-        self.setFixedHeight(720)
-        self.setFixedWidth(1280)
-
-
-    def init_variables(self):
-        self.current_page_nr = 0
-        self.edited_css_path = None
-        self.file_manager = FileManager()
-
-    def reload_editor_file(self):
-        self.editor_set_file(self.editor_combo_box_file.currentText())
 
     # Connected to editor_combo_box_file
     def change_editor_file(self):
-        self.editor_set_file(self.editor_combo_box_file.currentText())
+        return self.editor_set_file(self.editor_combo_box_file.currentText())
 
 
     # Connected to combo_box_font
@@ -251,71 +217,38 @@ class MainWindow(QMainWindow):
             
         if chosen_font == "[None]":
             self.file_manager.remove_css_param(style_name, 'font-family')
-            self.update_view()
+            self.update_editor()
+            self.check_add_used_fonts()
             return
 
-        for font, backup_font in font_list:
-            if font == chosen_font:
-                self.file_manager.set_css_param(style_name, 'font-family', f'"{font}", {backup_font}')
-                #print(self.file_manager.get_css_param(style_name, 'font-family'))
-                break
+        font = self.get_font_by_desc(chosen_font)
+        if font == None:
+            raise Exception(f"Chosen font: |{chosen_font}| has not been found")
+
+        if len(font.fallback.strip()) == 0:
+            self.file_manager.set_css_param(style_name, 'font-family', f'{font.name}')
+        else:        
+            self.file_manager.set_css_param(style_name, 'font-family', f'{font.name}, {font.fallback}')
         
-        self.update_view()
+        self.check_add_used_fonts()
+        self.update_editor()
+
 
     def change_color_slider(self):
-        self.change_color_rgb(self.slider_color_r.value(),
-                              self.slider_color_g.value(),
-                              self.slider_color_b.value())
+        self.change_color_rgb(*self.color_box.get_color_values())
+
+    def color_update_confirm(self):
+        self.update_editor()
 
     def remove_color(self):
         style_name = self.get_current_style_name()
         if style_name == "":
             return
 
-        self.reset_color_sliders()
+        self.color_box.reset_sliders()
         self.file_manager.remove_css_param(style_name, 'color')
-        self.update_view()
+        self.update_editor()
 
-    def set_color_sliders_enabled(self, enable):
-        """
-        Enables or disables (and resets) color sliders when given True or False respectively
-        """
-        self.slider_color_r.setEnabled(enable)
-        self.slider_color_g.setEnabled(enable)
-        self.slider_color_b.setEnabled(enable)
-        
-        self.reset_color_sliders()
-
-    def block_color_slider_signals(self, block):
-        """
-        Prevents sliders from triggering their functions when values change
-        """
-        self.slider_color_r.blockSignals(block)
-        self.slider_color_g.blockSignals(block)
-        self.slider_color_b.blockSignals(block)
-
-    def reset_color_sliders(self):
-        self.set_color_sliders(0, 0, 0)
-        self.color_label.setText(f"No color specified")
-
-    def set_color_sliders(self, r, g, b):
-        """
-        Sets slider values without triggering updates to avoid unnecessary file writes and update loops
-        Also keeps color label up to date
-        """
-        self.block_color_slider_signals(True)
-        self.slider_color_r.setValue(r)
-        self.slider_color_g.setValue(g)
-        self.slider_color_b.setValue(b)
-        self.block_color_slider_signals(False)
-        
-        hex_string = rgb_to_hex(r, g, b)
-        self.color_label.setText(f"Color: RGB ({r}, {g}, {b}) = {hex_string}")
-
-
-    def set_color_sliders_hex(self, hex_string):
-        r, g, b = hex_to_rgb(hex_string[1:])
-        self.set_color_sliders(r, g, b)
 
     def change_color_rgb(self, r, g, b):
         """
@@ -328,82 +261,148 @@ class MainWindow(QMainWindow):
         
         #print(f"Setting color to: RGB({r}, {g}, {b})")
         hex_string = rgb_to_hex(r, g, b)
-        self.color_label.setText(f"Color: RGB ({r}, {g}, {b}) = {hex_string}")
+        self.color_box.set_color_label(f"Color: RGB ({r}, {g}, {b}) = {hex_string}")
         #print(f"Setting color to: {hex_string}")
 
-        
         self.file_manager.set_css_param(style_name, 'color', hex_string)
-        self.update_view()
-        pass
 
     # Connected to combo_box_style
     def change_edit_style(self):
-        
-        # Update color sliders
-        color = self.file_manager.get_css_param(self.get_current_style_name(), 'color')
-        if color == "":
-            self.reset_color_sliders()
-        else:
-            self.set_color_sliders_hex(color)
-        
-        # Update font selectors, add new fonts to list if missing
-        current_font = self.file_manager.get_css_param(self.get_current_style_name(), 'font-family')
-        self.check_add_font(current_font)
-        
-        self.combo_box_font.clear()
-        self.combo_box_font.addItem("[None]")
-        self.combo_box_font.addItems(self.get_font_names())
+        self.update_editor()
 
-        for font_name, fallback_font in font_list:
-            if font_name in current_font:
-                index = self.combo_box_font.findText(font_name, Qt.MatchFixedString)
-                if index >= 0:
-                    self.combo_box_font.setCurrentIndex(index)
 
-        self.update_view()
+    def set_interface_signal_lock(self, on):
+        self.combo_box_font.blockSignals(on)
+
+
+    def toggle_button_states(self, style_name):
+        states_dict = {}
+        bold_val = self.file_manager.get_css_param(style_name, 'font-weight')
+        italic_val = self.file_manager.get_css_param(style_name, 'font-style')
+        decor_vals = self.file_manager.get_css_param(style_name, 'text-decoration')
+        decor_vals = decor_vals.split(' ')
+        states_dict['bold'] = bold_val == 'bold'
+        states_dict['italic'] = italic_val == 'italic'
+        states_dict['underline'] = 'underline' in decor_vals
+        states_dict['line-through'] = 'line-through' in decor_vals
+        self.basic_font_editor.toggle_button_states(states_dict)
     
 
-    def check_add_font(self, font_desc):
-        """
-        Adds a font from a CSS descriptor like '"Font", another-font' to the font_list
-        First checks if such font already exists in the list
-        """
-        # TODO: Check CSS guidline compliance
-        if font_desc == "" or font_desc == None:
-            return
+    def update_font_list(self):
+        self.combo_box_font.clear()
+        self.combo_box_font.addItem("[None]")
+        font_list = self.get_font_descriptions()
+        font_list.sort()
+        self.combo_box_font.addItems(font_list)
 
-        font_name = ""
-        fallback_font = "serif"
-        sign = ""
-        if '"' in font_desc:
-            sign = '"'
-        elif "'" in font_desc:
-            sign = "'"
-        else:
-            font_name = font_desc
+    
+    def parse_font_size_str(self, string):
+        font_size_str = re.match(r"([0-9.]*)([a-zA-Z%]*)", string)
+        font_size = font_size_str.group(1)
+        font_size_unit = font_size_str.group(2)
+        return font_size, font_size_unit
 
-        if sign != "":
-            start = font_desc.find(sign) + len(sign)
-            end = font_desc.find(sign, start + len(sign))
-            font_name = font_desc[start:end]
-            
-            if "sans-serif" in font_desc[:start] or "sans-serif" in font_desc[end:]:
-                fallback_font = "sans-serif"
-            
-            elif "monospace" in font_desc[:start] or "monospace" in font_desc[end:]:
-                fallback_font = "monospace"
+    
+    def get_font_descriptions(self):
+        return [str(font) for font_desc, font in self.fonts.items()]
 
-            elif "cursive" in font_desc[:start] or "cursive" in font_desc[end:]:
-                fallback_font = "cursive"
+    def get_font_by_name(self, name):
+        for font_desc, font in self.fonts.items():
+            if name == font.name:
+                return font
+        return None
 
-        font_tuple = (font_name, fallback_font)
-        if font_tuple not in font_list:
-            font_list.append(font_tuple)
+    def get_font_by_desc(self, desc):
+        for font_desc, font in self.fonts.items():
+            if desc in font_desc: # This way to also allow partial match
+                return font
+        return None
 
+    def get_font_by_css_string(self, name):
+        return self.get_font_by_name(Font.get_font_from_css_string(name).name)
+
+
+    # Checks if all used fonts are in EPUB. Adds or removes fonts otherwise
+    def check_add_used_fonts(self):
+        used_font_list = self.file_manager.get_used_font_name_list()
+        css_font_list = self.file_manager.get_css_font_name_list()
+
+        #print(used_font_list)
+        #print(css_font_list)
+
+        for font in used_font_list:
+            if font not in css_font_list:
+                font_obj = self.get_font_by_name(font)
+                if font_obj != None and font_obj.file_type == Font.TYPE_LOCAL_FILE:
+                    #print(f"Adding: {str(font_obj)}")
+                    self.file_manager.add_font_to_epub(font_obj)
         
+        
+        # The inner for loop has to be restarted after every remove
+        # otherwise, a rare exception may occur that a font is skipped
+        # because other font was removed and the list has shortened
+        removed = True
+        while removed:
+            removed = False
+            css_font_list = self.file_manager.get_css_font_name_list()
+            for font in css_font_list:
+                if font not in used_font_list:
+                    font_obj = self.get_font_by_name(font)
+                    if font_obj != None and font_obj.file_type == Font.TYPE_LOCAL_FILE:
+                        #print(f"Removing: {str(font_obj)}")
+                        self.file_manager.remove_font_from_epub(font_obj)
+                        removed = True
+                        break
+                
 
     def get_current_style_name(self):
         return str(self.combo_box_style.currentText())
+
+
+    def update_editor(self):
+        self.update_interface()
+        self.update_view()
+
+
+    # Updates all UI components in the graphical editor
+    def update_interface(self):
+
+        self.set_interface_signal_lock(True)
+
+        style_name = self.get_current_style_name()
+        
+        font_size_str = self.file_manager.get_css_param(style_name, 'font-size')
+        current_font_size, current_font_size_unit = self.parse_font_size_str(font_size_str)
+        
+        self.toggle_button_states(style_name)
+        
+        if not self.basic_font_editor.is_supported_unit(current_font_size_unit):
+            current_font_size_unit = '--'
+        self.basic_font_editor.set_font_size_unit(current_font_size_unit)
+        self.basic_font_editor.set_font_size(current_font_size)
+        
+        # Update color sliders
+        color = self.file_manager.get_css_param(style_name, 'color')
+        if color == "":
+            self.color_box.reset_sliders()
+        else:
+            self.color_box.set_sliders_hex(color)
+        
+        # Update font selectors, add new fonts to list if missing
+        current_font = self.file_manager.get_css_param(style_name, 'font-family')
+        #self.check_add_font(current_font)
+        
+        self.update_font_list()
+
+        font = self.get_font_by_css_string(current_font)
+        if font != None:
+            index = self.combo_box_font.findText(str(font), Qt.MatchFixedString)
+            if index >= 0:
+                self.combo_box_font.setCurrentIndex(index)
+
+        self.update_misc_value()
+
+        self.set_interface_signal_lock(False)
 
 
     def update_view(self):
@@ -430,7 +429,12 @@ class MainWindow(QMainWindow):
         self.file_manager.update_css()
         self.webview.reload()
 
+
     def on_webview_reload(self):
+        if self.page_changed:
+            self.page_changed = False
+            self.update_editor()
+            return
         self.file_manager.update_css()
         self.temporary_changes = False
 
@@ -443,55 +447,139 @@ class MainWindow(QMainWindow):
 
 
     def show_page(self, page_nr):
+        self.page_changed = True
         self.current_page_nr, self.shown_url = self.file_manager.get_page(page_nr)
         if not self.shown_url == None:
             self.webview.load(self.shown_url)
 
 
-    def editor_set_file(self, relative_path):
 
-        print(relative_path)
+    # Returns 0 if succeded, otherwise a positive number indicating an error
+    def editor_set_file(self, relative_path, force=False):   # force is used to reload file when user switches to editor, because path is the same
+        #print(f"Setting editor file path from {self.edited_css_path} to {relative_path} relative_path")
 
-        # Save the previous file
-        #if self.edited_css_path != None:
-        #    self.editor_save_changes()
+        # Ask to save the previous file, doesn't trigger when toggling from or to empty file to prevent misfires when loading new files
+        if self.is_editor_file_changed() and self.edited_css_path != None and relative_path != None and not force:
+            choice = self.editor_save_prompt()
+            
+            if choice == QMessageBox.Save:
+                self.editor_save_changes()
+            elif choice == QMessageBox.Cancel:
+                return RESULT_CANCEL
+
+        # Already handled by checkbox, leaving it here in case it will become useful
+        # Switched back to the same file, nothing to do
+        #if relative_path == self.edited_css_path and not force:
+        #    return 1
 
         # No file specified (eg. action triggererd too early)
         if relative_path == None or relative_path == "":
             self.edited_css_path = None
             self.css_editor.setText("")
-            return
+            return 3
 
         self.css_editor.setText(self.file_manager.get_css_text_by_path(relative_path))
+        self.css_editor.highlighter.setDocument(self.css_editor.document())
         self.edited_css_path = relative_path
+
+        return 0
         
+
+    def is_editor_file_changed(self):
+        return not self.css_editor.toPlainText() == self.file_manager.get_css_text_by_path(self.edited_css_path)
     
+
     def editor_save_changes(self):
         self.file_manager.overwrite_css_file_with_text(self.edited_css_path, self.css_editor.toPlainText())
         #self.file_manager.update_css() # Not needed, overwrite() already writes changes to the file
-        self.update_view()
+        self.update_editor()
+
 
     # Funkcje wykorzystywane prze QAction
-    def file_open(self):
-        if self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]) != 0:
+    def file_open(self, file=''):
+
+        file_path = file
+        if not file_path:
+            file_path =  QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]
+        
+        if '.' not in file_path: # Trying to open a directory or just cancelling
+            return
+
+        if str(file_path).rsplit('.', 1)[1] != "epub":
+            self.file_open_error()
+            return
+
+        result = self.file_manager.load_book(file_path)
+        if result > 0:
             self.file_close()
             self.file_open_error()
             return
         
         self.editor_set_file(None) # Need to select a CSS file
-        self.show_page(4)
+
+        self.import_fonts_from_book()
 
         self.combo_box_style.clear()
         self.editor_combo_box_file.clear()
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
         self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
+        # TEST
+        #font = list(self.fonts.values())[-4]
+        #self.file_manager.add_font_to_epub(font)
+        #self.file_manager.remove_font_from_epub(font)
+
+        self.show_page(0)
+
+
+    def import_fonts_from_book(self):
+        css_font_list = self.file_manager.get_css_font_name_list()
+        css_font_list.extend(self.file_manager.get_used_font_name_list()) # Not sure if needed, but can be useful sometimes
+
+        for font_name in css_font_list:
+            if '"' in font_name or '"' in font_name:
+                font_name = font_name[1:-1]
+            
+            font = Font.get_font_from_css_string(font_name)
+            font.file_type = Font.TYPE_FROM_EPUB
+            
+            # A bit crude, but works
+            found = False
+            for font_2 in list(self.fonts.values()):
+                if font_2.name == font.name:
+                    found = True
+                    break
+
+            if not found: 
+                self.fonts[str(font)] = font
+
+        self.update_font_list()
 
     def file_open_error(self):
-        error = QMessageBox()
-        error.setText("ERROR - could not open file. Not a valid EPUB.")
-        error.setWindowTitle("Error")
-        error.exec()
+        self.display_prompt("Error", "ERROR - could not open file. Not a valid EPUB.", QMessageBox.Ok)
+
+
+    # Returns a value to check if user wants to proceed or cancel, can also save changes
+    def file_save_prompt(self):
+        choice = self.display_prompt("Save EPUB", "Are you sure you want to leave this file?\n\nAll unsaved changes will be lost!", QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+        if choice == QMessageBox.Save:
+            self.file_save()
+        elif choice == QMessageBox.Discard:
+            return RESULT_SUCCESS
+
+        return RESULT_CANCEL
+
+
+    def editor_save_prompt(self):
+        return self.display_prompt("Save CSS file", "Some changes have not been saved", QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+
+
+    def display_prompt(self, title, message, button_flags):
+        prompt = QMessageBox()
+        prompt.setWindowTitle(title)
+        prompt.setText(message)
+        prompt.setStandardButtons(button_flags)
+        return prompt.exec()
 
 
     def file_save(self):
@@ -505,15 +593,136 @@ class MainWindow(QMainWindow):
         self.reload_interface()
         
     
+    # Check the "fonts" folder for new fonts
+    def import_fonts(self):
+        results = list(Path(path.realpath(__file__)).parents[0].joinpath("fonts").rglob("*.[tT][tT][fF]"))
+        
+        for font_path in results:
+            font = Font(str(font_path), file_type=Font.TYPE_LOCAL_FILE)
+            if str(font) not in self.fonts:
+                self.fonts[str(font)] = font
+        
+
     def change_view(self):
         if self.left_panel.layout().currentIndex() == 0:
-            self.reload_editor_file()
+            self.reload_editor_file(force=True)
             self.left_panel.layout().setCurrentIndex(1)
             self.view_change_action.setText('Change view to basic editor')
         else:
+            result = self.reload_editor_file(force=False) # Try to save file
+            if result == RESULT_CANCEL:
+                self.update_editor()
+                return
+
             self.left_panel.layout().setCurrentIndex(0)
             self.view_change_action.setText('Change view to text editor')
         
-        self.update_view()
+        self.update_editor()
 
+
+    def set_font_size(self):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        value = self.basic_font_editor.get_font_size()
+        unit = self.basic_font_editor.get_font_size_unit()
+        if unit == '--':
+            font_size_str = self.file_manager.get_css_param(self.get_current_style_name(), 'font-size')
+            _, unit = self.parse_font_size_str(font_size_str)
+
+        self.file_manager.set_css_param(style_name, 'font-size', value + unit)
+        self.update_editor()
+
+
+    def trigger_basic_css_prop(self, prop):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        if prop == 'bold':
+            self.trigger_bold(style_name)
+        elif prop == 'italic':
+            self.trigger_italic(style_name)
+        else:
+            current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
+            vals = current_val.split(' ')
+            if prop in vals:
+                vals.remove(prop)
+            else:
+                if 'none' in vals:
+                    vals.remove('none')
+                vals = [prop] + vals
+            new_val = ' '.join(vals)
+            self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
+        
+        self.update_editor()
+    
+    def trigger_bold(self, style_name):
+        #current_val = self.file_manager.get_css_param(style_name, 'font-weight')
+        
+        #if current_val == 'normal' or current_val == '':
+        #    self.file_manager.set_css_param(style_name, 'font-weight', 'bold')
+        #else:
+        #    self.file_manager.set_css_param(style_name, 'font-weight', 'normal')
+
+        button_checked = self.basic_font_editor.button_box.bold_button.isChecked()
+
+        if button_checked:
+            self.file_manager.set_css_param(style_name, 'font-weight', 'bold')
+        else:
+            self.file_manager.remove_css_param(style_name, 'font-weight')
+
+    def trigger_italic(self, style_name):
+        #current_val = self.file_manager.get_css_param(style_name, 'font-style')
+        #if current_val == 'normal' or current_val == '':
+        #    self.file_manager.set_css_param(style_name, 'font-style', 'italic')
+        #else:
+        #    self.file_manager.set_css_param(style_name, 'font-style', 'normal')
+
+        button_checked = self.basic_font_editor.button_box.italic_button.isChecked()
+
+        if button_checked:
+            self.file_manager.set_css_param(style_name, 'font-style', 'italic')
+        else:
+            self.file_manager.remove_css_param(style_name, 'font-style')
+
+    def set_misc_css_prop(self):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        property = self.misc_prop_editor.get_prop_name()
+        value = self.misc_prop_editor.get_value()
+        
+        self.file_manager.set_css_param(style_name, property, value)
+
+        self.update_editor()
+
+
+    def remove_misc_css_prop(self):
+        self.misc_prop_editor.set_value("")
+        
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            return
+
+        property = self.misc_prop_editor.get_prop_name()
+        
+        self.file_manager.remove_css_param(style_name, property)
+
+        self.update_editor()
+    
+    def update_misc_value(self):
+        style_name = self.get_current_style_name()
+        if style_name == "":
+            self.misc_prop_editor.set_value("")
+            return
+        
+        value = self.file_manager.get_css_param(style_name, self.misc_prop_editor.property_list.currentText())
+        if value == None:
+            value = ""
+        
+        self.misc_prop_editor.set_value(value)    
+    
 

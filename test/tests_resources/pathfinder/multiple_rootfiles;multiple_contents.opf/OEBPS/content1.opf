@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="3.0">
+	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+		<meta name="generator" content="Epub Editor by CA2P" />
+		<dc:title>Epub Editor - manual</dc:title>
+		<dc:creator>Aleksandra Piekarzewicz</dc:creator>
+		<dc:description>User manual for Epub Editor by CA2P.</dc:description>
+		<dc:publisher>CA2P</dc:publisher>
+		<dc:date>2021-12-04</dc:date>
+		<dc:language>en-GB</dc:language>
+        <dc:identifier id="bookid">01</dc:identifier>
+	</metadata>
+	<manifest>
+		<item id="stylesheet" href="css/styles.css" media-type="text/css"/>
+		<item id="Page01" href="Page01.xhtml" media-type="application/xhtml+xml" />
+		<item id="Page02" href="Page02.xhtml" media-type="application/xhtml+xml" />
+		<item id="Page03" href="Page03.xhtml" media-type="application/xhtml+xml" />
+		<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" />
+		<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+		<item id="logo" href="epub-editor-logo.png" media-type="image/png" />
+	</manifest>
+	<spine toc="ncx">
+		<itemref idref="Page01" />
+		<itemref idref="Page02" />
+		<itemref idref="Page03" />
+	</spine>
+</package>
