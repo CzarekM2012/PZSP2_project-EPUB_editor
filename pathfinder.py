@@ -2,6 +2,7 @@ from lxml import etree
 from pathlib import Path
 import io
 import random
+import datetime
 
 NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'EPUB': 'http://www.idpf.org/2007/ops',
@@ -45,6 +46,7 @@ class Pathfinder:
         self._load_container()
 
     def load_rendition(self, index: int = 0) -> None:
+        self.save_rendition_file()
         index = min(index, len(self._opf_files) - 1)
         spine, stylesheets, opf_file_tree = self._load_opf_file(index)
         self._rendition = (index,
@@ -99,10 +101,6 @@ class Pathfinder:
         item.tail = manifest[-1].tail
         manifest[-1].tail = manifest.text
         manifest.extend([item])
-        serialized = etree.tostring(opf_file_tree, encoding='utf-8',
-                                    xml_declaration=True)
-        with open(opf_file_path, 'wb') as file:
-            file.write(serialized)
 
         return item_id, item_path
 
@@ -149,10 +147,6 @@ class Pathfinder:
             manifest[-2].tail = manifest[-1].tail
         item_path = Path(opf_file_dirname) / match.get('href')
         manifest.remove(match)
-        serialized = etree.tostring(opf_file_tree, encoding='utf-8',
-                                    xml_declaration=True)
-        with open(opf_file_path, 'wb') as file:
-            file.write(serialized)
 
         for i in range(len(self._opf_files)):
             if i == self._rendition[0]:
@@ -160,6 +154,29 @@ class Pathfinder:
             if self._is_file_in_rendition_manifest(item_path, i):
                 return True, False
         return True, True
+
+    def save_rendition_file(self):
+        try:
+            opf_file_path, _, _, opf_file_tree = self._get_rendition_data()
+        except RuntimeError:
+            return
+        opf_file_path = self.book_dir / opf_file_path
+        metadata = opf_file_tree.find(f'{{{NAMESPACES["OPF"]}}}metadata')
+        last_edited =\
+            metadata.find(f'{{{NAMESPACES["OPF"]}}}meta[@property="dcterms:modified"]')
+        if last_edited is None:
+            last_edited =\
+                metadata.makeelement(f'{{{NAMESPACES["OPF"]}}}meta',
+                                     attrib={'property': "dcterms:modified"})
+            last_edited.tail = metadata[-1].tail
+            metadata[-1].tail = metadata.text
+            metadata.extend([last_edited])
+        now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+        last_edited.text = str(now)
+        serialized = etree.tostring(opf_file_tree, encoding='utf-8',
+                                    xml_declaration=True)
+        with open(opf_file_path, 'wb') as file:
+            file.write(serialized)
 
     def _generate_not_present_id(self, manifest, base_id: str) -> str:
         # Very simple id generation. Replace with something decent if need be

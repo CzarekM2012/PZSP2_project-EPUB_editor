@@ -225,6 +225,7 @@ class FileManager:
 
         save_path = Path(file_path).resolve()
         self.update_css()
+        self.pathfinder.save_rendition_file()
 
         # folder_name = path.splitext(path.basename(save_path))[0]
         # will get permission error if there is a folder with name "folder_name"
