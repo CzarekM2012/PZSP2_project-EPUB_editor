@@ -2,7 +2,8 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QFont, QDoubleValidator
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QLineEdit
+from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, \
+    QPushButton, QLineEdit
 from highlighter import Highlighter
 from utility import hex_to_rgb, rgb_to_hex
 
@@ -33,7 +34,7 @@ class MyWebEnginePage(QWebEnginePage):
 
     def __repr__(self):
         return 'MyPage'
-        
+
 
 class CSSEditor(QTextEdit):
     def __init__(self):
@@ -183,7 +184,7 @@ class FontSizePicker(QWidget):
         self.action = action
         self.setFixedHeight(50)
         layout = QHBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.decrease_button = QPushButton('-')
         self.decrease_button.released.connect(self._decrease_font_size)
@@ -232,7 +233,48 @@ class FontSizePicker(QWidget):
 
 
 class MiscCSSPropertyEditor(ControlPanelElement):
-    CSS_PROPERTIES = ['align-content', 'align-items', 'align-self', 'all', 'animation', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-timing-function', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-repeat', 'background-size', 'border', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-decoration-break', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'color', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'content', 'counter-increment', 'counter-reset', 'cursor', 'direction', 'display', 'empty-cells', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'font', 'font-family', 'font-feature-settings', 'font-kerning', 'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-variant-caps', 'font-weight', 'gap', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-gap', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-gap', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphens', 'image-rendering', 'isolation', 'justify-content', 'left', 'letter-spacing', 'line-height', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-bottom', 'margin-left', 'margin-right', 'margin-top', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'max-height', 'max-width', 'min-height', 'min-width', 'mix-blend-mode', 'object-fit', 'object-position', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-wrap', 'overflow-x', 'overflow-y', 'padding', 'padding-bottom', 'padding-left', 'padding-right', 'padding-top', 'page-break-after', 'page-break-before', 'page-break-inside', 'perspective', 'perspective-origin', 'pointer-events', 'position', 'quotes', 'resize', 'right', 'row-gap', 'scroll-behavior', 'tab-size', 'table-layout', 'text-align', 'text-align-last', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-style', 'text-indent', 'text-justify', 'text-overflow', 'text-shadow', 'text-transform', 'top', 'transform', 'transform-origin', 'transform-style', 'transition', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'unicode-bidi', 'user-select', 'vertical-align', 'visibility', 'white-space', 'widows', 'width', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'z-index']
+    CSS_PROPERTIES = ['align-content', 'align-items', 'align-self', 'all', 'animation', 'animation-delay',
+                      'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count',
+                      'animation-name', 'animation-play-state', 'animation-timing-function', 'backface-visibility',
+                      'background', 'background-attachment', 'background-blend-mode', 'background-clip',
+                      'background-color', 'background-image', 'background-origin', 'background-position',
+                      'background-repeat', 'background-size', 'border', 'border-bottom', 'border-bottom-color',
+                      'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style',
+                      'border-bottom-width', 'border-collapse', 'border-color', 'border-image',
+                      'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source',
+                      'border-image-width', 'border-left', 'border-left-color', 'border-left-style',
+                      'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style',
+                      'border-right-width', 'border-spacing', 'border-style', 'border-top', 'border-top-color',
+                      'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width',
+                      'border-width', 'bottom', 'box-decoration-break', 'box-shadow', 'box-sizing', 'break-after',
+                      'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path',
+                      'color', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color',
+                      'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'content',
+                      'counter-increment', 'counter-reset', 'cursor', 'direction', 'display', 'empty-cells', 'filter',
+                      'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap',
+                      'float', 'font', 'font-family', 'font-feature-settings', 'font-kerning', 'font-size',
+                      'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-variant-caps',
+                      'font-weight', 'gap', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow',
+                      'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-gap', 'grid-column-start',
+                      'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-gap', 'grid-row-start', 'grid-template',
+                      'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation',
+                      'height', 'hyphens', 'image-rendering', 'isolation', 'justify-content', 'left', 'letter-spacing',
+                      'line-height', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type',
+                      'margin', 'margin-bottom', 'margin-left', 'margin-right', 'margin-top', 'mask-image', 'mask-mode',
+                      'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'max-height', 'max-width',
+                      'min-height', 'min-width', 'mix-blend-mode', 'object-fit', 'object-position', 'opacity', 'order',
+                      'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width',
+                      'overflow', 'overflow-wrap', 'overflow-x', 'overflow-y', 'padding', 'padding-bottom',
+                      'padding-left', 'padding-right', 'padding-top', 'page-break-after', 'page-break-before',
+                      'page-break-inside', 'perspective', 'perspective-origin', 'pointer-events', 'position',
+                      'quotes', 'resize', 'right', 'row-gap', 'scroll-behavior', 'tab-size', 'table-layout',
+                      'text-align', 'text-align-last', 'text-decoration', 'text-decoration-color',
+                      'text-decoration-line', 'text-decoration-style', 'text-indent', 'text-justify', 'text-overflow',
+                      'text-shadow', 'text-transform', 'top', 'transform', 'transform-origin', 'transform-style',
+                      'transition', 'transition-delay', 'transition-duration', 'transition-property',
+                      'transition-timing-function', 'unicode-bidi', 'user-select', 'vertical-align', 'visibility',
+                      'white-space', 'widows', 'width', 'word-break', 'word-spacing', 'word-wrap',
+                      'writing-mode', 'z-index']
 
     def __init__(self, label_style, label_text, action_set, action_remove, action_value_update):
         super().__init__(label_style, label_text)
@@ -275,24 +317,24 @@ class MiscCSSPropertyEditor(ControlPanelElement):
 
     def get_value(self):
         return self.value_field.text()
-    
+
     def set_value(self, value_string):
         self.value_field.setText(value_string)
-        
+
 
 class ColorBox(ControlPanelElement):
     def __init__(self, label_style, label_text, change_color_action, slider_release_action, remove_color_action):
         super().__init__(label_style, label_text)
         self.setFixedHeight(180)
         layout = QVBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.color_label = QLabel(text="No color specified")
         self.color_label.setFont(QFont('Arial', 16))
         self.slider_color_r = ColorSlider()
         self.slider_color_g = ColorSlider()
         self.slider_color_b = ColorSlider()
         main_widget = QWidget()
-        
+
         self.slider_color_r.valueChanged.connect(change_color_action)
         self.slider_color_g.valueChanged.connect(change_color_action)
         self.slider_color_b.valueChanged.connect(change_color_action)
@@ -357,7 +399,7 @@ class ColorBox(ControlPanelElement):
         self.set_color_values(0, 0, 0)
         self.set_color_label(f"No color specified")
 
-        
+
 class ColorSlider(QSlider):
     def __init__(self):
         super().__init__()
