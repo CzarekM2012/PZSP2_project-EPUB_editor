@@ -5,7 +5,8 @@ block_cipher = None
 
 added_files = [
          ( 'books/manual.epub', 'books' ),
-         ( 'fonts/*', 'fonts' )
+         ( 'fonts/*', 'fonts' ),
+         ( 'resources/*', 'resources' )
          ]
 
 
