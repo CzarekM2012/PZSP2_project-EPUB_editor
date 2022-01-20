@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QStyleFactory
+from PySide6.QtWidgets import QApplication
 
 # Only needed for access to command line arguments
 import sys
@@ -9,7 +9,7 @@ from qt_material import apply_stylesheet
 
 debug = False
 folder_name = Path(__file__).parent.name
-if(folder_name == "pzsp2"):
+if folder_name == "pzsp2":
     debug = True
 
 
@@ -30,7 +30,6 @@ def main():
     if not debug:
         base_path = Path(base_path).parent
 
-    # Just in case
     os.chdir(base_path)
 
     start_app()

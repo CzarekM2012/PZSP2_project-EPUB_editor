@@ -1,4 +1,4 @@
-from PySide6.QtCore import  Qt, QUrl
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QFont, QDoubleValidator
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -11,8 +11,6 @@ class MyMenuBar(QMenuBar):
     def __init__(self):
         super().__init__()
         self.file_menu = self.addMenu('&File')
-        #self.edit_menu = self.addMenu('&Edit')
-        #self.selection_menu = self.addMenu('&Selection')
         self.view_menu = self.addMenu('&View')
 
 
@@ -49,7 +47,7 @@ class ControlPanelElement(QWidget):
     def __init__(self, label_style, label_text):
         super().__init__()
         self.main_layout = QVBoxLayout()
-        self.main_layout.setContentsMargins(0,0,0,0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
 
         self.label = QLabel(label_text)
         self.label.setStyleSheet(label_style)
@@ -119,6 +117,7 @@ class BasicFontEditor(ControlPanelElement):
     def toggle_button_states(self, states_dict):
         self.button_box.toggle_button_states(states_dict)
 
+
 class ButtonBox(QWidget):
     def __init__(self, action):
         super().__init__()
@@ -126,7 +125,7 @@ class ButtonBox(QWidget):
         self.setFixedHeight(50)
 
         layout = QHBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         font = QFont('', pointSize=16)
         self.bold_button = QPushButton(text='B', font=font)
@@ -231,6 +230,7 @@ class FontSizePicker(QWidget):
     def is_supported_unit(self, value):
         return value in self.UNITS
 
+
 class MiscCSSPropertyEditor(ControlPanelElement):
     CSS_PROPERTIES = ['align-content', 'align-items', 'align-self', 'all', 'animation', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-timing-function', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-repeat', 'background-size', 'border', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-decoration-break', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'color', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'content', 'counter-increment', 'counter-reset', 'cursor', 'direction', 'display', 'empty-cells', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'font', 'font-family', 'font-feature-settings', 'font-kerning', 'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-variant-caps', 'font-weight', 'gap', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-gap', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-gap', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphens', 'image-rendering', 'isolation', 'justify-content', 'left', 'letter-spacing', 'line-height', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-bottom', 'margin-left', 'margin-right', 'margin-top', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'max-height', 'max-width', 'min-height', 'min-width', 'mix-blend-mode', 'object-fit', 'object-position', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-wrap', 'overflow-x', 'overflow-y', 'padding', 'padding-bottom', 'padding-left', 'padding-right', 'padding-top', 'page-break-after', 'page-break-before', 'page-break-inside', 'perspective', 'perspective-origin', 'pointer-events', 'position', 'quotes', 'resize', 'right', 'row-gap', 'scroll-behavior', 'tab-size', 'table-layout', 'text-align', 'text-align-last', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-style', 'text-indent', 'text-justify', 'text-overflow', 'text-shadow', 'text-transform', 'top', 'transform', 'transform-origin', 'transform-style', 'transition', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'unicode-bidi', 'user-select', 'vertical-align', 'visibility', 'white-space', 'widows', 'width', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'z-index']
 
@@ -238,11 +238,11 @@ class MiscCSSPropertyEditor(ControlPanelElement):
         super().__init__(label_style, label_text)
         self.setFixedHeight(120)
         layout = QVBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         top_layout = QHBoxLayout()
-        top_layout.setContentsMargins(0,0,0,0)
+        top_layout.setContentsMargins(0, 0, 0, 0)
         bottom_layout = QHBoxLayout()
-        bottom_layout.setContentsMargins(0,0,0,0)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
         main_widget = QWidget()
 
         top_panel = QWidget()
@@ -344,14 +344,14 @@ class ColorBox(ControlPanelElement):
         self.slider_color_r.blockSignals(enabled)
 
     def set_sliders_enabled(self, enabled):
-            """
-            Enables or disables (and resets) color sliders when given True or False respectively
-            """
-            self.slider_color_r.setEnabled(enabled)
-            self.slider_color_g.setEnabled(enabled)
-            self.slider_color_b.setEnabled(enabled)
-            
-            self.reset_sliders()
+        """
+        Enables or disables (and resets) color sliders when given True or False respectively
+        """
+        self.slider_color_r.setEnabled(enabled)
+        self.slider_color_g.setEnabled(enabled)
+        self.slider_color_b.setEnabled(enabled)
+
+        self.reset_sliders()
 
     def reset_sliders(self):
         self.set_color_values(0, 0, 0)

@@ -5,17 +5,15 @@ import zipfile
 from zipfile import ZIP_DEFLATED, ZipFile
 from shutil import rmtree, copyfile
 
-from cssutils.css.cssstylesheet import CSSStyleSheet
 from cssutils.css import CSSStyleDeclaration, CSSFontFaceRule
 from gui_elements import *
-from font import Font
 
 import cssutils
 
 from pathfinder import Pathfinder
 
-class FileManager:
 
+class FileManager:
     FONT_MEDIA_TYPE = "application/x-font-ttf"
 
     def __init__(self):
@@ -45,7 +43,7 @@ class FileManager:
     def load_book(self, file_path):
         """
         Unpacks a zip from specified path into the editing directory.
-        Returns 0 if succeded, or a positive number otherwise
+        Returns 0 if succeeded, or a positive number otherwise
         """
         self.load_path = Path(file_path)
         self.prepare_edition_dir()
@@ -74,19 +72,8 @@ class FileManager:
             self.css_files = []
             return 3
 
-        self.page_files_paths, self.css_file_paths =\
+        self.page_files_paths, self.css_file_paths = \
             self.pathfinder.get_rendition_paths()
-
-        #item_attributes = ['Page01', 'C:\\Users\\Czarek\\Desktop\\V\\PZSP2\\Projekt\\pzsp2\\edit\\OEBPS\\ytfgu7g67', 'qwedwasd']
-        #ids = self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_id=ids[0])
-        #ids = self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(item_path=ids[1])
-        #ids = self.pathfinder.add_item_to_rendition_manifest(item_attributes)
-        #removed, file_safe_to_remove = self.pathfinder.remove_item_from_rendition_manifest(ids[0], ids[1])
-        #print(self.pathfinder.get_rendition_manifest_items_attributes())
-
-        #self.add_font_file("fonts\\alex-brush\\AlexBrush-Regular.ttf")
 
         self.load_css_files()
 
@@ -105,35 +92,30 @@ class FileManager:
             css_file.write(self.css_files[i].cssText)
             css_file.close()
 
-
     def is_file_loaded(self):
-        return not self.load_path == None
+        return self.load_path is not None
 
     def get_css_param(self, style_name, param_name):
         style = self.get_css_style_by_name(style_name)
-        if style == None:
+        if style is None:
             return ""
 
         return style.getPropertyValue(param_name)
 
-
     def set_css_param(self, style_name, param_name, value):
         style = self.get_css_style_by_name(style_name)
-        if style == None:
+        if style is None:
             return
-        #print(f"Param name: {param_name}, Value: {value}")
         style.setProperty(param_name, value)
 
     def remove_css_param(self, style_name, param_name):
         style = self.get_css_style_by_name(style_name)
-        if style == None:
+        if style is None:
             return
         style.removeProperty(param_name)
 
-
     def get_css_file_paths(self):
         return [str(path) for path in self.css_file_paths]
-
 
     def get_css_style_names(self):
         name_list = []
@@ -142,12 +124,11 @@ class FileManager:
                 name_list.append(item.selectorText)
         return name_list
 
-
     def get_css_style_by_name(self, name):
         for file in self.css_files:
             for item in file.cssRules.rulesOfType(cssutils.css.CSSRule.STYLE_RULE):
                 if name == item.selectorText:
-                    return item.style 
+                    return item.style
         return None
 
     def get_all_css_fonts(self):
@@ -161,17 +142,15 @@ class FileManager:
     def get_css_params_by_style_name(self, name):
         param_list = []
         style = self.get_css_style_by_name(name)
-        if style == None:
+        if style is None:
             return param_list
 
         for property in style.getProperties():
             param_list.append((property.name, property.value))
         return param_list
 
-
     def get_css_file(self, file_index):
         return self.css_files[file_index]
-
 
     def get_css_file_by_path(self, file_path):
         if file_path is not None:
@@ -180,10 +159,8 @@ class FileManager:
             if self.css_file_paths[i] == file_path:
                 return self.css_files[i]
 
-
     def get_css_text(self, file_index):
         return str(self.css_files[file_index].cssText, 'utf-8')
-
 
     def overwrite_css_file_with_text(self, file_path, text):
 
@@ -198,30 +175,19 @@ class FileManager:
         # Reload all CSS files
         self.load_css_files()
 
-        #file = self.get_stylesheet_file_by_path(file_path)
-        #if file == None:
-        #    return
-
-        #print(text)
-        #file.setCSSText(bytes(text, 'utf-8')) #TODO: Check encoding, probably need binary
-
-
-    def set_css_file_by_path(self, file_path, css_file):
+    def set_css_file_by_path(self, file_path):
         for i in range(len(self.css_files)):
             if self.css_file_paths[i] == file_path:
                 return self.css_files[i]
 
-
     def get_css_text_by_path(self, file_path):
         stylesheet = self.get_css_file_by_path(file_path)
-        if stylesheet == None:
+        if stylesheet is None:
             return ""
         return str(stylesheet.cssText, 'utf-8')
 
-
     def get_css_file_count(self):
         return len(self.css_files)
-
 
     def save_book(self, file_path):
 
@@ -247,7 +213,6 @@ class FileManager:
 
         print('File saved')
 
-
     def get_page(self, page_nr):
 
         # Because later checks still return index 0, if there are 0 pages
@@ -256,7 +221,7 @@ class FileManager:
 
         # Check if requested page number is correct
         if page_nr < 0:
-           page_nr = self.get_page_count()-1
+            page_nr = self.get_page_count() - 1
         elif page_nr >= self.get_page_count():
             page_nr = 0
 
@@ -265,10 +230,8 @@ class FileManager:
         # Also return page nr, because it can change
         return page_nr, QUrl.fromLocalFile(page_file_path)
 
-
     def get_page_count(self):
         return len(self.page_files_paths)
-
 
     def add_font_file(self, file_path):
         path_obj = Path(file_path)
@@ -290,7 +253,6 @@ class FileManager:
 
         return new_path
 
-
     def remove_font_file(self, file_path):
         path_obj = Path(file_path)
 
@@ -310,17 +272,14 @@ class FileManager:
         ]
         self.pathfinder.remove_item_from_rendition_manifest(attributes)
 
-
     def add_font_to_epub(self, font):
         new_path = self.add_font_file(font.file_path)
         self.add_css_font_property(font, new_path)
-
 
     def remove_font_from_epub(self, font):
         self.remove_font_file(font.file_path)
         self.remove_css_font_property(font)
         pass
-
 
     def add_css_font_property(self, font, book_relative_path):
         font_list = self.get_all_css_fonts()
@@ -330,9 +289,6 @@ class FileManager:
             font_family = css_font.getProperties('font-family')[0].propertyValue.cssText
             if font_family == font.name:
                 return
-            #font_path = font.getProperties('src')[0].propertyValue.cssText
-            #if 'url(' in font_path and font_path.index('url(') == 0:
-            #    font_path = font_path[4:-1]
 
         # Add this to any CSS file
         css_relative_path = relpath(book_relative_path, self.css_file_paths[0].parent)
@@ -342,11 +298,11 @@ class FileManager:
         font_style.setProperty('src', value=f'url("{font_path}")')
         self.css_files[0].add(CSSFontFaceRule(style=font_style))
 
-
     def remove_css_font_property(self, font):
         for file in self.css_files:
             for index, rule in enumerate(file.cssRules):
-                if type(rule) == CSSFontFaceRule and rule.style.getProperties('font-family')[0].propertyValue.cssText == font.name:
+                if type(rule) == CSSFontFaceRule and rule.style.getProperties('font-family')[0].propertyValue.cssText \
+                        == font.name:
                     file.deleteRule(index)
                     pass
 
@@ -361,7 +317,7 @@ class FileManager:
                 font_text = props[0].propertyValue.cssText
                 if ',' in font_text:
                     font_text = font_text.split(',', 1)[0]
-                
+
                 if font_text not in font_list:
                     font_list.append(font_text)
 

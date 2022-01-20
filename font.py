@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cssutils import css
+
 class Font:
     TYPE_NO_FILE = 0
     TYPE_LOCAL_FILE = 1
@@ -35,7 +35,7 @@ class Font:
         # Check if file is of correct type
         if file_type != self.TYPE_NO_FILE and extension.lower() == 'ttf':
             self.file_path = name
-        else: # No valid local file found
+        else:  # No valid local file found
             self.file_path = None
             self.file_type = self.TYPE_NO_FILE
 
@@ -76,8 +76,5 @@ class Font:
             type_str = '  [EPUB] '
         
         file_string = ''
-        #if self.file_type == self.TYPE_LOCAL_FILE:
-        #    file_string = ' from: ' + self.file_path
 
         return f"{type_str}{self.name} ({self.fallback}){file_string}"
-
