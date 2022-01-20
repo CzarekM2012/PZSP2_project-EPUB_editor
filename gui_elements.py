@@ -1,8 +1,8 @@
-from PySide6.QtCore import QUrl, Qt
+from PySide6.QtCore import  Qt, QUrl
 from PySide6.QtGui import QFont, QDoubleValidator
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QLineEdit, QFrame
+from PySide6.QtWidgets import QComboBox, QMenuBar, QSlider, QTextEdit, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QLineEdit
 from highlighter import Highlighter
 from utility import hex_to_rgb, rgb_to_hex
 
@@ -194,6 +194,7 @@ class FontSizePicker(QWidget):
         self.size_field.setValidator(QDoubleValidator(0, 500, 3))
         self.size_field.editingFinished.connect(action)
         self.unit_picker = QComboBox()
+        self.unit_picker.setMinimumWidth(100)
         self.unit_picker.addItems(self.UNITS)
         self.unit_picker.textActivated.connect(action)
 
