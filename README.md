@@ -1,6 +1,13 @@
 # PZSP2
 
-Projekt zespołowy 2.
+### Projekt zespołowy 2
 
-Pakiet instalacyjny można zbudowac poleceniem:
-pynsist .\installer.cfg
+Edytor plików CSS zawartych w książkach EPUB.
+
+## Autorzy
+- Aleksander Garlikowski
+- Przemysław Pąk
+- Cezary Moczulski
+- Aleksandra Piekarzewicz
+
+Pakiet instalacyjny można zbudować poleceniem: pyinstaller main.spec
