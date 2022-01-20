@@ -297,7 +297,7 @@ class MiscCSSPropertyEditor(ControlPanelElement):
         
 
 class ColorBox(ControlPanelElement):
-    def __init__(self, label_style, label_text, change_color_action, remove_color_action):
+    def __init__(self, label_style, label_text, change_color_action, slider_release_action, remove_color_action):
         super().__init__(label_style, label_text)
         self.setFixedHeight(180)
         layout = QVBoxLayout()
@@ -312,6 +312,10 @@ class ColorBox(ControlPanelElement):
         self.slider_color_r.valueChanged.connect(change_color_action)
         self.slider_color_g.valueChanged.connect(change_color_action)
         self.slider_color_b.valueChanged.connect(change_color_action)
+
+        self.slider_color_r.sliderReleased.connect(slider_release_action)
+        self.slider_color_g.sliderReleased.connect(slider_release_action)
+        self.slider_color_b.sliderReleased.connect(slider_release_action)
 
         self.color_remove_button = QPushButton(text="Remove color")
         self.color_remove_button.clicked.connect(remove_color_action)

@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
         self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size, self.trigger_basic_css_prop)
         self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
         self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop, self.remove_misc_css_prop, self.update_misc_value)
-        self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.remove_color)
+        self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.color_update_confirm, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
         control_panel_layout.addWidget(self.basic_font_editor)
@@ -237,6 +237,8 @@ class MainWindow(QMainWindow):
     def change_color_slider(self):
         self.change_color_rgb(*self.color_box.get_color_values())
 
+    def color_update_confirm(self):
+        self.update_editor()
 
     def remove_color(self):
         style_name = self.get_current_style_name()
@@ -263,8 +265,6 @@ class MainWindow(QMainWindow):
         #print(f"Setting color to: {hex_string}")
 
         self.file_manager.set_css_param(style_name, 'color', hex_string)
-        self.update_editor()
-
 
     # Connected to combo_box_style
     def change_edit_style(self):
