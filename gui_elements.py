@@ -1,7 +1,3 @@
-from cProfile import label
-from msilib.schema import ControlEvent
-from os import stat
-from tkinter import Toplevel
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QFont, QDoubleValidator
 from PySide6.QtWebEngineCore import QWebEnginePage
