@@ -395,12 +395,10 @@ class MainWindow(QMainWindow):
         self.update_font_list()
 
         font = self.get_font_by_css_string(current_font)
-        if font == None:
-            return
-
-        index = self.combo_box_font.findText(str(font), Qt.MatchFixedString)
-        if index >= 0:
-            self.combo_box_font.setCurrentIndex(index)
+        if font != None:
+            index = self.combo_box_font.findText(str(font), Qt.MatchFixedString)
+            if index >= 0:
+                self.combo_box_font.setCurrentIndex(index)
 
         self.update_misc_value()
 

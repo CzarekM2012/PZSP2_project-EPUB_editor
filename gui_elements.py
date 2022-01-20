@@ -15,8 +15,8 @@ class MyMenuBar(QMenuBar):
     def __init__(self):
         super().__init__()
         self.file_menu = self.addMenu('&File')
-        self.edit_menu = self.addMenu('&Edit')
-        self.selection_menu = self.addMenu('&Selection')
+        #self.edit_menu = self.addMenu('&Edit')
+        #self.selection_menu = self.addMenu('&Selection')
         self.view_menu = self.addMenu('&View')
 
 
@@ -39,20 +39,7 @@ class MyWebEnginePage(QWebEnginePage):
 
     def __repr__(self):
         return 'MyPage'
-
-
-class ControlPanel(QWidget):
-    def __init__(self):
-        super().__init__()
-        layout = QVBoxLayout()
-        layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        layout.addWidget(QSlider(orientation=Qt.Orientation.Horizontal))
-        layout.addWidget(QComboBox())
-        layout.addWidget(QComboBox())
-
-        self.setLayout(layout)
-
+        
 
 class CSSEditor(QTextEdit):
     def __init__(self):
