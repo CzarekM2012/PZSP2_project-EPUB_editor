@@ -497,17 +497,20 @@ class MainWindow(QMainWindow):
 
     # Funkcje wykorzystywane prze QAction
     def file_open(self, file=''):
-        opened = 0
 
-        if file:
-            opened = self.file_manager.load_book(file)
-        else:
-            opened = self.file_manager.load_book(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
+        file_path = file
+        if not file_path:
+            file_path =  QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]
         
-        if opened == 1:
-            self.file_close()
+        if '.' not in file_path: # Trying to open a directory or just cancelling
             return
-        elif opened == 2:
+
+        if str(file_path).rsplit('.', 1)[1] != "epub":
+            self.file_open_error()
+            return
+
+        result = self.file_manager.load_book(file_path)
+        if result > 0:
             self.file_close()
             self.file_open_error()
             return

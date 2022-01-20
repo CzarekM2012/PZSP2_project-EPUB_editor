@@ -71,7 +71,7 @@ class FileManager:
             print(f"Could not open file due to {e}")
             self.load_path = None
             self.css_files = []
-            return 2
+            return 3
 
         self.page_files_paths, self.css_file_paths =\
             self.pathfinder.get_rendition_paths()
