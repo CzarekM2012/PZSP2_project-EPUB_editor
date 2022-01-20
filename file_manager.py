@@ -132,7 +132,7 @@ class FileManager:
 
 
     def get_css_file_paths(self):
-        return self.css_file_paths
+        return [str(path) for path in self.css_file_paths]
 
 
     def get_css_style_names(self):
@@ -174,6 +174,8 @@ class FileManager:
 
 
     def get_css_file_by_path(self, file_path):
+        if file_path is not None:
+            file_path = Path(file_path)
         for i in range(len(self.css_files)):
             if self.css_file_paths[i] == file_path:
                 return self.css_files[i]
