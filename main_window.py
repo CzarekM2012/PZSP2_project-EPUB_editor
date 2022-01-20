@@ -1,10 +1,6 @@
-from os import path
 from pathlib import Path
-from PySide6.QtGui import QAction, QFont, QKeySequence
-from PySide6.QtWidgets import QFrame, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
-# from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
-from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtCore import QUrl, Qt
+from PySide6.QtGui import QAction, QKeySequence, QIcon
+from PySide6.QtWidgets import QFileDialog, QMainWindow, QStackedLayout
 
 from gui_elements import *
 from file_manager import FileManager
@@ -13,11 +9,12 @@ from utility import *
 import re
 from font import Font
 
-RESULT_SUCCESS = 0 # Return value
+RESULT_SUCCESS = 0  # Return value
 RESULT_CANCEL = 2
 
 
 HIGHLIGHT_COLOR_STRING = "#ffffab"
+
 
 class MainWindow(QMainWindow):
 
@@ -27,7 +24,7 @@ class MainWindow(QMainWindow):
         self.set_defaults()
         self.init_variables()
         self.reload_interface()
-        self.file_open(path.join(path.dirname(__file__), 'books/manual.epub'))
+        self.file_open(Path(__file__).parent / 'books/manual.epub')
 
     def closeEvent(self, evnt):
         print("Closing")
@@ -41,6 +38,7 @@ class MainWindow(QMainWindow):
 
     def set_defaults(self):
         self.setWindowTitle("EPUB CSS Editor")
+        self.setWindowIcon(QIcon((str(Path(__file__).parent /"resources/icon0.ico"))))
         self.resize(self.screen_size * 0.7)
 
 
@@ -156,10 +154,13 @@ class MainWindow(QMainWindow):
         control_panel_layout = QVBoxLayout()
 
         self.combo_box_style = ControlPanelComboBox(label_style, 'CSS style', self.change_edit_style)
-        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size, self.trigger_basic_css_prop)
-        self.combo_box_font = self.basic_font_editor.combo_box  # zmienna wykorzystywana przez stary kod
-        self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop, self.remove_misc_css_prop, self.update_misc_value)
-        self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider, self.color_update_confirm, self.remove_color)
+        self.basic_font_editor = BasicFontEditor(label_style, 'Font', self.change_font, self.set_font_size,
+                                                 self.trigger_basic_css_prop)
+        self.combo_box_font = self.basic_font_editor.combo_box
+        self.misc_prop_editor = MiscCSSPropertyEditor(label_style, 'Other properties', self.set_misc_css_prop,
+                                                      self.remove_misc_css_prop, self.update_misc_value)
+        self.color_box = ColorBox(label_style, 'Font color', self.change_color_slider,
+                                  self.color_update_confirm, self.remove_color)
 
         control_panel_layout.addWidget(self.combo_box_style)
         control_panel_layout.addWidget(self.basic_font_editor)
@@ -173,8 +174,10 @@ class MainWindow(QMainWindow):
         self.editor_panel = QWidget()
         editor_panel_layout = QVBoxLayout()
 
-        self.css_editor = CSSEditor()  # Needs to be created before combo_box, because combo_box changes editor's text (and triggers right after creation)
-        
+        self.css_editor = CSSEditor()  # Needs to be created before combo_box,
+                                       # because combo_box changes editor's text
+                                       # (and triggers right after creation)
+
         self.editor_combo_box_file = QComboBox()
         self.editor_combo_box_file.currentTextChanged.connect(self.change_editor_file)
 
@@ -214,7 +217,7 @@ class MainWindow(QMainWindow):
         chosen_font = self.combo_box_font.currentText()
         if style_name == "":
             return
-            
+
         if chosen_font == "[None]":
             self.file_manager.remove_css_param(style_name, 'font-family')
             self.update_editor()
@@ -258,11 +261,9 @@ class MainWindow(QMainWindow):
         style_name = self.get_current_style_name()
         if style_name == "":
             return
-        
-        #print(f"Setting color to: RGB({r}, {g}, {b})")
+
         hex_string = rgb_to_hex(r, g, b)
         self.color_box.set_color_label(f"Color: RGB ({r}, {g}, {b}) = {hex_string}")
-        #print(f"Setting color to: {hex_string}")
 
         self.file_manager.set_css_param(style_name, 'color', hex_string)
 
@@ -314,7 +315,7 @@ class MainWindow(QMainWindow):
 
     def get_font_by_desc(self, desc):
         for font_desc, font in self.fonts.items():
-            if desc in font_desc: # This way to also allow partial match
+            if desc in font_desc:  # This way to also allow partial match
                 return font
         return None
 
@@ -327,17 +328,13 @@ class MainWindow(QMainWindow):
         used_font_list = self.file_manager.get_used_font_name_list()
         css_font_list = self.file_manager.get_css_font_name_list()
 
-        #print(used_font_list)
-        #print(css_font_list)
-
         for font in used_font_list:
             if font not in css_font_list:
                 font_obj = self.get_font_by_name(font)
                 if font_obj != None and font_obj.file_type == Font.TYPE_LOCAL_FILE:
-                    #print(f"Adding: {str(font_obj)}")
                     self.file_manager.add_font_to_epub(font_obj)
-        
-        
+
+
         # The inner for loop has to be restarted after every remove
         # otherwise, a rare exception may occur that a font is skipped
         # because other font was removed and the list has shortened
@@ -349,11 +346,10 @@ class MainWindow(QMainWindow):
                 if font not in used_font_list:
                     font_obj = self.get_font_by_name(font)
                     if font_obj != None and font_obj.file_type == Font.TYPE_LOCAL_FILE:
-                        #print(f"Removing: {str(font_obj)}")
                         self.file_manager.remove_font_from_epub(font_obj)
                         removed = True
                         break
-                
+
 
     def get_current_style_name(self):
         return str(self.combo_box_style.currentText())
@@ -390,7 +386,6 @@ class MainWindow(QMainWindow):
         
         # Update font selectors, add new fonts to list if missing
         current_font = self.file_manager.get_css_param(style_name, 'font-family')
-        #self.check_add_font(current_font)
         
         self.update_font_list()
 
@@ -453,12 +448,12 @@ class MainWindow(QMainWindow):
             self.webview.load(self.shown_url)
 
 
+    # Returns 0 if succeeded, otherwise a positive number indicating an error
+    def editor_set_file(self, relative_path, force=False):
+        # force is used to reload file when user switches to editor, because path is the same
 
-    # Returns 0 if succeded, otherwise a positive number indicating an error
-    def editor_set_file(self, relative_path, force=False):   # force is used to reload file when user switches to editor, because path is the same
-        #print(f"Setting editor file path from {self.edited_css_path} to {relative_path} relative_path")
-
-        # Ask to save the previous file, doesn't trigger when toggling from or to empty file to prevent misfires when loading new files
+        # Ask to save the previous file, doesn't trigger when toggling from
+        # or to empty file to prevent misfires when loading new files
         if self.is_editor_file_changed() and self.edited_css_path != None and relative_path != None and not force:
             choice = self.editor_save_prompt()
             
@@ -467,12 +462,7 @@ class MainWindow(QMainWindow):
             elif choice == QMessageBox.Cancel:
                 return RESULT_CANCEL
 
-        # Already handled by checkbox, leaving it here in case it will become useful
-        # Switched back to the same file, nothing to do
-        #if relative_path == self.edited_css_path and not force:
-        #    return 1
-
-        # No file specified (eg. action triggererd too early)
+        # No file specified (eg. action triggered too early)
         if relative_path == None or relative_path == "":
             self.edited_css_path = None
             self.css_editor.setText("")
@@ -483,7 +473,7 @@ class MainWindow(QMainWindow):
         self.edited_css_path = relative_path
 
         return 0
-        
+
 
     def is_editor_file_changed(self):
         return not self.css_editor.toPlainText() == self.file_manager.get_css_text_by_path(self.edited_css_path)
@@ -491,22 +481,16 @@ class MainWindow(QMainWindow):
 
     def editor_save_changes(self):
         self.file_manager.overwrite_css_file_with_text(self.edited_css_path, self.css_editor.toPlainText())
-        #self.file_manager.update_css() # Not needed, overwrite() already writes changes to the file
         self.update_editor()
 
 
-    # Funkcje wykorzystywane prze QAction
-    def file_open(self, file=''):
+    def file_open(self, file: Path = None):
 
         file_path = file
         if not file_path:
-            file_path =  QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0]
+            file_path =  Path(QFileDialog.getOpenFileName(self, 'Open Epub', '', 'Epub Files (*.epub)')[0])
         
-        if '.' not in file_path: # Trying to open a directory or just cancelling
-            return
-
-        if str(file_path).rsplit('.', 1)[1] != "epub":
-            self.file_open_error()
+        if not file_path.suffix == '.epub':
             return
 
         result = self.file_manager.load_book(file_path)
@@ -515,7 +499,7 @@ class MainWindow(QMainWindow):
             self.file_open_error()
             return
         
-        self.editor_set_file(None) # Need to select a CSS file
+        self.editor_set_file(None)  # Need to select a CSS file
 
         self.import_fonts_from_book()
 
@@ -524,17 +508,12 @@ class MainWindow(QMainWindow):
         self.combo_box_style.addItems(self.file_manager.get_css_style_names())
         self.editor_combo_box_file.addItems(self.file_manager.get_css_file_paths())
 
-        # TEST
-        #font = list(self.fonts.values())[-4]
-        #self.file_manager.add_font_to_epub(font)
-        #self.file_manager.remove_font_from_epub(font)
-
         self.show_page(0)
 
 
     def import_fonts_from_book(self):
         css_font_list = self.file_manager.get_css_font_name_list()
-        css_font_list.extend(self.file_manager.get_used_font_name_list()) # Not sure if needed, but can be useful sometimes
+        css_font_list.extend(self.file_manager.get_used_font_name_list())
 
         for font_name in css_font_list:
             if '"' in font_name or '"' in font_name:
@@ -542,8 +521,7 @@ class MainWindow(QMainWindow):
             
             font = Font.get_font_from_css_string(font_name)
             font.file_type = Font.TYPE_FROM_EPUB
-            
-            # A bit crude, but works
+
             found = False
             for font_2 in list(self.fonts.values()):
                 if font_2.name == font.name:
@@ -579,6 +557,8 @@ class MainWindow(QMainWindow):
         prompt.setWindowTitle(title)
         prompt.setText(message)
         prompt.setStandardButtons(button_flags)
+        prompt.setIcon(QMessageBox.Icon(2))
+        prompt.setWindowIcon(QIcon(str(Path(__file__).parent /"resources/icon0.ico")))
         return prompt.exec()
 
 
@@ -595,7 +575,7 @@ class MainWindow(QMainWindow):
     
     # Check the "fonts" folder for new fonts
     def import_fonts(self):
-        results = list(Path(path.realpath(__file__)).parents[0].joinpath("fonts").rglob("*.[tT][tT][fF]"))
+        results = list((Path(__file__).parent /"fonts").rglob("*.[tT][tT][fF]"))
         
         for font_path in results:
             font = Font(str(font_path), file_type=Font.TYPE_LOCAL_FILE)
@@ -609,7 +589,7 @@ class MainWindow(QMainWindow):
             self.left_panel.layout().setCurrentIndex(1)
             self.view_change_action.setText('Change view to basic editor')
         else:
-            result = self.reload_editor_file(force=False) # Try to save file
+            result = self.reload_editor_file(force=False)  # Try to save file
             if result == RESULT_CANCEL:
                 self.update_editor()
                 return
@@ -644,28 +624,14 @@ class MainWindow(QMainWindow):
             self.trigger_bold(style_name)
         elif prop == 'italic':
             self.trigger_italic(style_name)
+        elif prop == 'underline':
+            self.trigger_underline(style_name)
         else:
-            current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
-            vals = current_val.split(' ')
-            if prop in vals:
-                vals.remove(prop)
-            else:
-                if 'none' in vals:
-                    vals.remove('none')
-                vals = [prop] + vals
-            new_val = ' '.join(vals)
-            self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
+            self.trigger_strikeout(style_name)
         
         self.update_editor()
     
     def trigger_bold(self, style_name):
-        #current_val = self.file_manager.get_css_param(style_name, 'font-weight')
-        
-        #if current_val == 'normal' or current_val == '':
-        #    self.file_manager.set_css_param(style_name, 'font-weight', 'bold')
-        #else:
-        #    self.file_manager.set_css_param(style_name, 'font-weight', 'normal')
-
         button_checked = self.basic_font_editor.button_box.bold_button.isChecked()
 
         if button_checked:
@@ -674,18 +640,42 @@ class MainWindow(QMainWindow):
             self.file_manager.remove_css_param(style_name, 'font-weight')
 
     def trigger_italic(self, style_name):
-        #current_val = self.file_manager.get_css_param(style_name, 'font-style')
-        #if current_val == 'normal' or current_val == '':
-        #    self.file_manager.set_css_param(style_name, 'font-style', 'italic')
-        #else:
-        #    self.file_manager.set_css_param(style_name, 'font-style', 'normal')
-
         button_checked = self.basic_font_editor.button_box.italic_button.isChecked()
 
         if button_checked:
             self.file_manager.set_css_param(style_name, 'font-style', 'italic')
         else:
             self.file_manager.remove_css_param(style_name, 'font-style')
+
+    def trigger_underline(self, style_name):
+        current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
+        button_val = self.basic_font_editor.button_box.underline_button.isChecked()
+        vals = current_val.split(' ')
+        if button_val:
+            if 'none' in vals:
+                vals.remove('none')
+            if 'underline' not in vals:
+                vals = ['underline'] + vals
+        else:
+            if 'underline' in vals:
+                vals.remove('underline')
+        new_val = ' '.join(vals)
+        self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
+
+    def trigger_strikeout(self, style_name):
+        current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
+        button_val = self.basic_font_editor.button_box.strikeout_button.isChecked()
+        vals = current_val.split(' ')
+        if button_val:
+            if 'none' in vals:
+                vals.remove('none')
+            if 'line-through' not in vals:
+                vals = ['line-through'] + vals
+        else:
+            if 'line-through' in vals:
+                vals.remove('line-through')
+        new_val = ' '.join(vals)
+        self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
 
     def set_misc_css_prop(self):
         style_name = self.get_current_style_name()
@@ -724,5 +714,3 @@ class MainWindow(QMainWindow):
             value = ""
         
         self.misc_prop_editor.set_value(value)    
-    
-

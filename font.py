@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cssutils import css
+
 class Font:
     TYPE_NO_FILE = 0
     TYPE_LOCAL_FILE = 1
@@ -8,13 +8,13 @@ class Font:
     TYPE_UNKNOWN = 3
 
     def __init__(self, name, file_type=0, fallback=None):
-        
+
         self.name = name
         self.fallback = fallback
         self.file_path = None
         self.file_type = file_type
-        
-        if fallback == None:
+
+        if fallback is None:
             self.fallback = self.guess_font_family(name)
         else:
             self.fallback = fallback
@@ -31,11 +31,11 @@ class Font:
         path = Path(name)
         self.name = path.name.split('.', 1)[0]     # Override name, if it's a path
         extension = path.name.rsplit('.', 1)[1]
-        
+
         # Check if file is of correct type
         if file_type != self.TYPE_NO_FILE and extension.lower() == 'ttf':
             self.file_path = name
-        else: # No valid local file found
+        else:  # No valid local file found
             self.file_path = None
             self.file_type = self.TYPE_NO_FILE
 
@@ -60,7 +60,7 @@ class Font:
                 font_name = font_name[1:-1]
             
             fallback_font = css_string.split(',', 1)[1].strip()
-        
+
         if fallback_font == '':
             fallback_font = Font.guess_font_family(css_string)
 
@@ -76,8 +76,5 @@ class Font:
             type_str = '  [EPUB] '
         
         file_string = ''
-        #if self.file_type == self.TYPE_LOCAL_FILE:
-        #    file_string = ' from: ' + self.file_path
 
         return f"{type_str}{self.name} ({self.fallback}){file_string}"
-
