@@ -644,28 +644,14 @@ class MainWindow(QMainWindow):
             self.trigger_bold(style_name)
         elif prop == 'italic':
             self.trigger_italic(style_name)
+        elif prop == 'underline':
+            self.trigger_underline(style_name)
         else:
-            current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
-            vals = current_val.split(' ')
-            if prop in vals:
-                vals.remove(prop)
-            else:
-                if 'none' in vals:
-                    vals.remove('none')
-                vals = [prop] + vals
-            new_val = ' '.join(vals)
-            self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
+            self.trigger_strikeout(style_name)
         
         self.update_editor()
     
     def trigger_bold(self, style_name):
-        #current_val = self.file_manager.get_css_param(style_name, 'font-weight')
-        
-        #if current_val == 'normal' or current_val == '':
-        #    self.file_manager.set_css_param(style_name, 'font-weight', 'bold')
-        #else:
-        #    self.file_manager.set_css_param(style_name, 'font-weight', 'normal')
-
         button_checked = self.basic_font_editor.button_box.bold_button.isChecked()
 
         if button_checked:
@@ -674,18 +660,42 @@ class MainWindow(QMainWindow):
             self.file_manager.remove_css_param(style_name, 'font-weight')
 
     def trigger_italic(self, style_name):
-        #current_val = self.file_manager.get_css_param(style_name, 'font-style')
-        #if current_val == 'normal' or current_val == '':
-        #    self.file_manager.set_css_param(style_name, 'font-style', 'italic')
-        #else:
-        #    self.file_manager.set_css_param(style_name, 'font-style', 'normal')
-
         button_checked = self.basic_font_editor.button_box.italic_button.isChecked()
 
         if button_checked:
             self.file_manager.set_css_param(style_name, 'font-style', 'italic')
         else:
             self.file_manager.remove_css_param(style_name, 'font-style')
+
+    def trigger_underline(self, style_name):
+        current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
+        button_val = self.basic_font_editor.button_box.underline_button.isChecked()
+        vals = current_val.split(' ')
+        if button_val:
+            if 'none' in vals:
+                vals.remove('none')
+            if 'underline' not in vals:
+                vals = ['underline'] + vals
+        else:
+            if 'underline' in vals:
+                vals.remove('underline')
+        new_val = ' '.join(vals)
+        self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
+
+    def trigger_strikeout(self, style_name):
+        current_val = self.file_manager.get_css_param(style_name, 'text-decoration')
+        button_val = self.basic_font_editor.button_box.strikeout_button.isChecked()
+        vals = current_val.split(' ')
+        if button_val:
+            if 'none' in vals:
+                vals.remove('none')
+            if 'line-through' not in vals:
+                vals = ['line-through'] + vals
+        else:
+            if 'line-through' in vals:
+                vals.remove('line-through')
+        new_val = ' '.join(vals)
+        self.file_manager.set_css_param(style_name, 'text-decoration', new_val)
 
     def set_misc_css_prop(self):
         style_name = self.get_current_style_name()
