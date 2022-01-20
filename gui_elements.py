@@ -90,7 +90,7 @@ class ControlPanelComboBox(ControlPanelElement):
 class BasicFontEditor(ControlPanelElement):
     def __init__(self, label_style, label_text, combo_box_action, font_size_picker_action, button_box_action):
         super().__init__(label_style, label_text)
-        self.setFixedHeight(160)
+        self.setFixedHeight(165)
 
         self.combo_box = QComboBox()
         self.combo_box.currentTextChanged.connect(combo_box_action)
