@@ -1,5 +1,5 @@
 from pathlib import Path
-from PySide6.QtGui import QAction, QFont, QKeySequence
+from PySide6.QtGui import QAction, QFont, QKeySequence, QIcon
 from PySide6.QtWidgets import QFrame, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QSlider, QStackedLayout, QStyleFactory, QToolBar, QVBoxLayout, QWidget, QPushButton, QMessageBox
 # from build.nsis.pkgs.PySide6.examples.widgets.widgetsgallery.widgetgallery import style_names
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
 
     def set_defaults(self):
         self.setWindowTitle("EPUB CSS Editor")
+        self.setWindowIcon(QIcon((str(Path(__file__).parent /"resources/icon0.ico"))))
         self.resize(self.screen_size * 0.7)
 
 
@@ -574,6 +575,8 @@ class MainWindow(QMainWindow):
         prompt.setWindowTitle(title)
         prompt.setText(message)
         prompt.setStandardButtons(button_flags)
+        prompt.setIcon(QMessageBox.Icon(2))
+        prompt.setWindowIcon(QIcon(str(Path(__file__).parent /"resources/icon0.ico")))
         return prompt.exec()
 
 
