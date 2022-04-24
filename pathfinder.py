@@ -20,10 +20,10 @@ class MissingValueError(ValueError):
 
 
 class Pathfinder:
-    '''
+    """
     Object finding paths to stylesheets and files in the spine of
     the unpacked .epub file
-    '''
+    """
     def __init__(self, book_dir: str = None) -> None:
         self._rendition = (-1,
                            {'spine': list[str](),
@@ -75,10 +75,10 @@ class Pathfinder:
 
     def add_item_to_rendition_manifest(self, item_attributes:
                                        list[str, str, str]) -> bool:
-        '''
+        """
         Works if `item_attributes[0]` is unique id and `item_attributes[1]`
         refers to a file not added to manifest already
-        '''
+        """
         item_id, item_path, item_media_type = item_attributes
         opf_file_path, _, _, opf_file_tree = self._get_rendition_data()
         manifest = opf_file_tree.find(f'{{{NAMESPACES["OPF"]}}}manifest')
@@ -103,13 +103,13 @@ class Pathfinder:
 
     def remove_item_from_rendition_manifest(
             self, ids: tuple[str, str] = (None, None)) -> tuple[bool, bool]:
-        '''
+        """
         Removes item with both id and href or at leas one of them matching
         given values(scenario dependent on given set of values)\n
         First bool from returned tuple is `True` if item was removed,
         second - if file itself can be removed because it is not mentioned
         in manifests of other renditions
-        '''
+        """
         item_id, item_path = ids
         if item_id is None and item_path is None:
             return False, False

@@ -1,13 +1,12 @@
-# PZSP2
+## EPUB CSS Editor
 
-### Projekt zespołowy 2
+CSS files editor for EPUB packages.
 
-Edytor plików CSS zawartych w książkach EPUB.
-
-## Autorzy
+### Authors (CA<sup>2</sup>P team)
 - Aleksander Garlikowski
 - Przemysław Pąk
 - Cezary Moczulski
 - Aleksandra Piekarzewicz
 
-Pakiet instalacyjny można zbudować poleceniem: pyinstaller main.spec
+
+![resources/example.png](resources/example.png)
